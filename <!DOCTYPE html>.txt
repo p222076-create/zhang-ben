@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>學校擺攤記帳</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
+    background: #f5f7fb;
+    color: #1a1f2e;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 1rem;
+  }
+
+  .app-container {
+    max-width: 980px;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 28px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+    padding: 1.8rem 1.6rem;
+  }
+
+  .header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.6rem;
+    gap: 1rem;
+  }
+  .greeting h1 { font-size: 1.7rem; font-weight: 700; color: #0b1220; }
+  .greeting p { font-size: 0.88rem; color: #5e6a7d; margin-top: 4px; }
+
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1.4rem;
+    background: #f0f3fa;
+    padding: 0.8rem 1.4rem;
+    border-radius: 20px;
+  }
+  .stat-item { text-align: right; min-width: 74px; }
+  .stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #5e6a7d;
+    font-weight: 600;
+  }
+  .stat-value { font-size: 1.25rem; font-weight: 700; line-height: 1.3; }
+  .cost-text { color: #b45309; }
+  .price-text { color: #1e7e34; }
+  .profit-text { color: #2b6ed7; }
+  .today-text { color: #7c3aed; }
+
+  .quick-add {
+    background: #f8fafd;
+    border-radius: 22px;
+    padding: 1.3rem 1.3rem 1.1rem;
+    margin-bottom: 1.6rem;
+    border: 1px solid #e9eef3;
+  }
+  .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+  }
+  .input-group { flex: 1 1 120px; min-width: 0; }
+  .input-group label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #4a5568;
+    margin-bottom: 5px;
+  }
+  .input-group input {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border-radius: 14px;
+    border: 1.5px solid #dfe7f0;
+    background: white;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: #1a1f2e;
+    outline: none;
+    transition: 0.15s;
+  }
+  .input-group input:focus {
+    border-color: #2b6ed7;
+    box-shadow: 0 0 0 4px rgba(43,110,215,0.1);
+  }
+  .input-group input::placeholder { color: #a0aec0; }
+
+  .btn-add {
+    background: #1a1f2e;
+    color: white;
+    border: none;
+    padding: 0.7rem 1.6rem;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    height: 46px;
+    flex: 0 0 auto;
+    font-family: inherit;
+    transition: 0.2s;
+  }
+  .btn-add:hover { background: #0b1220; }
+  .btn-add:active { transform: scale(0.98); }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 10px;
+  }
+  .toolbar h2 { font-size: 1.05rem; font-weight: 700; color: #1a1f2e; }
+  .record-count {
+    background: #e9eef3;
+    padding: 0.15rem 0.7rem;
+    border-radius: 40px;
+    font-size: 0.78rem;
+    color: #2d3748;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+  .toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .btn-tool {
+    background: none;
+    border: 1.5px solid #dfe7f0;
+    color: #4a5568;
+    font-size: 0.82rem;
+    cursor: pointer;
+    padding: 7px 14px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-family: inherit;
+    transition: 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .btn-tool:hover { background: #f0f3fa; border-color: #cbd5e0; }
+  .btn-tool.danger:hover { background: #fce9ef; color: #c7254e; border-color: #f5c2d0; }
+  .btn-tool.export:hover { background: #e3f5e9; color: #1e7e34; border-color: #b7e0c4; }
+
+  .records-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 460px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .record-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.95rem 1.1rem;
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid #edf2f9;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    gap: 10px;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .record-item:hover { border-color: #d0ddeb; background: #fbfdff; }
+
+  .record-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex: 1;
+  }
+  .record-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    font-weight: 700;
+    background: #eef4ff;
+    color: #2b6ed7;
+  }
+
+  .record-main { min-width: 0; }
+  .record-desc {
+    font-weight: 600;
+    font-size: 0.98rem;
+    color: #1a1f2e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+  .record-meta {
+    font-size: 0.7rem;
+    color: #7b8a9e;
+    display: flex;
+    gap: 10px;
+    margin-top: 3px;
+    flex-wrap: wrap;
+  }
+  .record-meta .note { color: #8b6f3e; }
+
+  .record-nums {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    text-align: right;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .num-block { min-width: 52px; }
+  .num-label { font-size: 0.62rem; color: #8b97a9; font-weight: 600; text-transform: uppercase; }
+  .num-val { font-weight: 700; font-size: 0.92rem; }
+  .num-cost { color: #b45309; }
+  .num-price { color: #1e7e34; }
+  .num-profit { color: #2b6ed7; }
+  .num-profit.negative { color: #c7254e; }
+
+  .delete-item {
+    background: none;
+    border: none;
+    color: #bcc6d4;
+    cursor: pointer;
+    font-size: 1.05rem;
+    padding: 6px 8px;
+    border-radius: 30px;
+    font-family: inherit;
+    line-height: 1;
+    transition: 0.15s;
+    flex-shrink: 0;
+  }
+  .delete-item:hover { color: #c7254e; background: #fce9ef; }
+
+  .empty-state {
+    text-align: center;
+    padding: 2.4rem 1.5rem;
+    color: #8b97a9;
+    background: #f8fafd;
+    border-radius: 22px;
+    border: 1px dashed #d0ddeb;
+    font-size: 0.95rem;
+  }
+  .empty-state .big-emoji { font-size: 2.4rem; display: block; margin-bottom: 10px; }
+
+  @media (max-width: 760px) {
+    .app-container { padding: 1.3rem 1rem; }
+    .header { flex-direction: column; align-items: flex-start; }
+    .stats { width: 100%; justify-content: space-between; }
+    .form-row { flex-direction: column; align-items: stretch; }
+    .btn-add { width: 100%; }
+    .record-desc { max-width: 130px; }
+    .record-nums { gap: 8px; }
+    .num-block { min-width: 44px; }
+  }
+</style>
+</head>
+<body>
+<div class="app-container">
+
+  <div class="header">
+    <div class="greeting">
+      <h1>🏫 擺攤記帳</h1>
+      <p>⚡ 成本可填 0 · 自動算利潤 · 支援匯出備份</p>
+    </div>
+    <div class="stats">
+      <div class="stat-item">
+        <div class="stat-label">總成本</div>
+        <div class="stat-value cost-text" id="totalCost">$0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">總售價</div>
+        <div class="stat-value price-text" id="totalPrice">$0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">總利潤</div>
+        <div class="stat-value profit-text" id="totalProfit">$0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">今日利潤</div>
+        <div class="stat-value today-text" id="todayProfit">$0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-add">
+    <div class="form-row">
+      <div class="input-group" style="flex: 2 1 140px;">
+        <label>🏷️ 品項</label>
+        <input type="text" id="descInput" placeholder="例如：二手書、手工餅乾" maxlength="30">
+      </div>
+      <div class="input-group">
+        <label>💸 成本</label>
+        <input type="number" id="costInput" placeholder="0" min="0" step="0.01" value="0">
+      </div>
+      <div class="input-group">
+        <label>💰 售價</label>
+        <input type="number" id="priceInput" placeholder="0" min="0" step="0.01">
+      </div>
+      <div class="input-group" style="flex: 1.5 1 120px;">
+        <label>📝 備註</label>
+        <input type="text" id="noteInput" placeholder="買家、數量…" maxlength="40">
+      </div>
+      <button class="btn-add" id="addBtn">＋ 記錄</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <h2>📋 交易記錄 <span class="record-count" id="recordCount">0</span></h2>
+    <div class="toolbar-actions">
+      <button class="btn-tool export" id="exportBtn">⬇️ 匯出 CSV</button>
+      <button class="btn-tool danger" id="clearAllBtn">🗑️ 清除全部</button>
+    </div>
+  </div>
+
+  <div class="records-list" id="recordsList"></div>
+
+</div>
+
+<script>
+(function() {
+  var STORAGE_KEY = 'school_stall_account_records';
+
+  var records = [];
+
+  function generateId() {
+    return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+  }
+
+  function todayStr() {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  function loadRecords() {
+    try {
+      var stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        var parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          records = parsed.map(function(r) {
+            r.id = r.id || generateId();
+            r.cost = Number(r.cost) || 0;
+            r.price = Number(r.price) || 0;
+            r.note = r.note || '';
+            return r;
+          });
+          return;
+        }
+      }
+    } catch (e) {}
+    records = [];
+  }
+
+  function saveRecords() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    } catch (e) {}
+  }
+
+  var totalCostEl = document.getElementById('totalCost');
+  var totalPriceEl = document.getElementById('totalPrice');
+  var totalProfitEl = document.getElementById('totalProfit');
+  var todayProfitEl = document.getElementById('todayProfit');
+  var recordsListEl = document.getElementById('recordsList');
+  var recordCountEl = document.getElementById('recordCount');
+
+  function formatMoney(v) {
+    var num = Number(v) || 0;
+    return num % 1 === 0 ? num.toString() : num.toFixed(2);
+  }
+
+  function render() {
+    var totalCost = 0, totalPrice = 0, totalProfit = 0, todayProfit = 0;
+    var today = todayStr();
+
+    records.forEach(function(rec) {
+      var cost = Number(rec.cost) || 0;
+      var price = Number(rec.price) || 0;
+      var profit = price - cost;
+      totalCost += cost;
+      totalPrice += price;
+      totalProfit += profit;
+      if (rec.date === today) todayProfit += profit;
+    });
+
+    totalCostEl.textContent = '$' + formatMoney(totalCost);
+    totalPriceEl.textContent = '$' + formatMoney(totalPrice);
+    totalProfitEl.textContent = '$' + formatMoney(totalProfit);
+    totalProfitEl.style.color = totalProfit < 0 ? '#c7254e' : '#2b6ed7';
+    todayProfitEl.textContent = '$' + formatMoney(todayProfit);
+    todayProfitEl.style.color = todayProfit < 0 ? '#c7254e' : '#7c3aed';
+
+    if (records.length === 0) {
+      recordsListEl.innerHTML =
+        '<div class="empty-state">' +
+          '<span class="big-emoji">🧾</span>' +
+          '還沒有任何交易，記下第一筆吧！' +
+        '</div>';
+      recordCountEl.textContent = '0';
+      return;
+    }
+
+    var html = '';
+    records.forEach(function(rec) {
+      var cost = Number(rec.cost) || 0;
+      var price = Number(rec.price) || 0;
+      var profit = price - cost;
+      var profitClass = profit < 0 ? 'num-profit negative' : 'num-profit';
+      var desc = rec.desc || '未命名';
+      var note = rec.note ? '<span class="note">📝 ' + rec.note + '</span>' : '';
+      var dateStr = rec.date || '';
+
+      html +=
+        '<div class="record-item" data-id="' + rec.id + '">' +
+          '<div class="record-left">' +
+            '<div class="record-icon">$</div>' +
+            '<div class="record-main">' +
+              '<div class="record-desc" title="' + desc + '">' + desc + '</div>' +
+              '<div class="record-meta">' +
+                '<span>📅 ' + dateStr + '</span>' +
+                note +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="record-nums">' +
+            '<div class="num-block">' +
+              '<div class="num-label">成本</div>' +
+              '<div class="num-val num-cost">$' + formatMoney(cost) + '</div>' +
+            '</div>' +
+            '<div class="num-block">' +
+              '<div class="num-label">售價</div>' +
+              '<div class="num-val num-price">$' + formatMoney(price) + '</div>' +
+            '</div>' +
+            '<div class="num-block">' +
+              '<div class="num-label">利潤</div>' +
+              '<div class="num-val ' + profitClass + '">$' + formatMoney(profit) + '</div>' +
+            '</div>' +
+            '<button class="delete-item" data-id="' + rec.id + '" title="刪除">✕</button>' +
+          '</div>' +
+        '</div>';
+    });
+
+    recordsListEl.innerHTML = html;
+    recordCountEl.textContent = records.length;
+
+    var deleteBtns = document.querySelectorAll('.delete-item');
+    for (var i = 0; i < deleteBtns.length; i++) {
+      deleteBtns[i].addEventListener('click', function(e) {
+        e.stopPropagation();
+        deleteRecordById(this.getAttribute('data-id'));
+      });
+    }
+  }
+
+  function deleteRecordById(id) {
+    records = records.filter(function(r) { return r.id !== id; });
+    saveRecords();
+    render();
+  }
+
+  function addRecord(desc, cost, price, note) {
+    var trimmedDesc = desc.trim();
+    if (!trimmedDesc) { alert('請輸入品項名稱'); return false; }
+
+    var numCost = parseFloat(cost);
+    if (isNaN(numCost) || numCost < 0) { alert('成本請填 0 或正數'); return false; }
+
+    var numPrice = parseFloat(price);
+    if (isNaN(numPrice) || numPrice < 0) { alert('售價請填 0 或正數'); return false; }
+    if (numPrice === 0 && numCost === 0) { alert('成本與售價不能同時為 0'); return false; }
+
+    records.unshift({
+      id: generateId(),
+      desc: trimmedDesc,
+      cost: numCost,
+      price: numPrice,
+      note: note.trim(),
+      date: todayStr()
+    });
+    saveRecords();
+    render();
+    return true;
+  }
+
+  function clearAllRecords() {
+    if (records.length === 0) return;
+    if (confirm('確定要刪除所有交易記錄嗎？此動作無法復原。')) {
+      records = [];
+      saveRecords();
+      render();
+    }
+  }
+
+  function exportCSV() {
+    if (records.length === 0) {
+      alert('目前沒有記錄可以匯出');
+      return;
+    }
+
+    var headers = ['日期', '品項', '成本', '售價', '利潤', '備註'];
+    var rows = [headers.join(',')];
+
+    records.forEach(function(rec) {
+      var cost = Number(rec.cost) || 0;
+      var price = Number(rec.price) || 0;
+      var profit = price - cost;
+      var row = [
+        rec.date || '',
+        '"' + (rec.desc || '').replace(/"/g, '""') + '"',
+        cost,
+        price,
+        profit,
+        '"' + (rec.note || '').replace(/"/g, '""') + '"'
+      ];
+      rows.push(row.join(','));
+    });
+
+    // 加上 UTF-8 BOM，Excel 開中文才不會亂碼
+    var csvContent = '\uFEFF' + rows.join('\r\n');
+    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '擺攤記帳_' + todayStr() + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  loadRecords();
+  render();
+
+  var descInput = document.getElementById('descInput');
+  var costInput = document.getElementById('costInput');
+  var priceInput = document.getElementById('priceInput');
+  var noteInput = document.getElementById('noteInput');
+  var addBtn = document.getElementById('addBtn');
+  var exportBtn = document.getElementById('exportBtn');
+  var clearAllBtn = document.getElementById('clearAllBtn');
+
+  addBtn.addEventListener('click', function() {
+    var ok = addRecord(descInput.value, costInput.value, priceInput.value, noteInput.value);
+    if (ok) {
+      descInput.value = '';
+      costInput.value = '0';
+      priceInput.value = '';
+      noteInput.value = '';
+      descInput.focus();
+    }
+  });
+
+  descInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); }
+  });
+  priceInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); }
+  });
+
+  exportBtn.addEventListener('click', exportCSV);
+  clearAllBtn.addEventListener('click', clearAllRecords);
+})();
+</script>
+</body>
+</html>
