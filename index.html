@@ -19,7 +19,7 @@
   }
 
   .app-container {
-    max-width: 980px;
+    max-width: 1050px;
     width: 100%;
     background: #ffffff;
     border-radius: 28px;
@@ -38,8 +38,15 @@
   .greeting h1 { font-size: 1.7rem; font-weight: 700; color: #0b1220; }
   .greeting p { font-size: 0.88rem; color: #5e6a7d; margin-top: 4px; }
 
-  /* 新增的期初資金設定區 */
-  .initial-funds {
+  /* 設定區 (資金與庫存) */
+  .settings-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 1rem;
+    width: 100%;
+  }
+  .setting-box {
     background: #fffbeb;
     border: 1.5px dashed #fcd34d;
     border-radius: 12px;
@@ -47,13 +54,18 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 1rem;
     font-weight: 600;
     color: #b45309;
     font-size: 0.95rem;
+    flex: 1 1 200px;
   }
-  .initial-funds input {
-    width: 100px;
+  .setting-box.stock {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #166534;
+  }
+  .setting-box input {
+    width: 80px;
     padding: 0.4rem 0.6rem;
     border-radius: 8px;
     border: 1px solid #fcd34d;
@@ -63,6 +75,10 @@
     color: #b45309;
     background: white;
     outline: none;
+  }
+  .setting-box.stock input {
+    border-color: #86efac;
+    color: #166534;
   }
 
   .stats {
@@ -86,9 +102,8 @@
   }
   .stat-value { font-size: 1.25rem; font-weight: 700; line-height: 1.3; }
   
-  /* 特別強調手頭現金的顏色 */
   .cash-text { color: #d97706; font-size: 1.4rem; }
-  
+  .stock-text { color: #166534; font-size: 1.4rem; }
   .cost-text { color: #b45309; }
   .price-text { color: #1e7e34; }
   .profit-text { color: #2b6ed7; }
@@ -106,7 +121,7 @@
     gap: 12px;
     align-items: flex-end;
   }
-  .input-group { flex: 1 1 120px; min-width: 0; }
+  .input-group { flex: 1 1 100px; min-width: 0; }
   .input-group label {
     display: block;
     font-size: 0.72rem;
@@ -246,7 +261,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 200px;
+    max-width: 180px;
   }
   .record-meta {
     font-size: 0.7rem;
@@ -257,6 +272,16 @@
     flex-wrap: wrap;
   }
   .record-meta .note { color: #8b6f3e; }
+  
+  /* 顯示賣出數量的標籤 */
+  .qty-badge {
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.75rem;
+  }
 
   .record-nums {
     display: flex;
@@ -306,7 +331,7 @@
     .header { flex-direction: column; align-items: flex-start; }
     .form-row { flex-direction: column; align-items: stretch; }
     .btn-add { width: 100%; }
-    .record-desc { max-width: 130px; }
+    .record-desc { max-width: 120px; }
     .record-nums { gap: 8px; }
     .num-block { min-width: 44px; }
   }
@@ -318,13 +343,19 @@
   <div class="header">
     <div class="greeting" style="width: 100%;">
       <h1>🏫 擺攤記帳</h1>
-      <p>⚡ 成本可填 0 · 自動算利潤 · 支援匯出備份</p>
+      <p>⚡ 自動算利潤與剩餘庫存 · 支援匯出備份</p>
     </div>
     
-    <!-- 新增：期初資金設定 -->
-    <div class="initial-funds">
-      <span>💰 我一開始帶了多少錢： $</span>
-      <input type="number" id="initialFundsInput" value="0" min="0" step="1">
+    <!-- 設定區：期初資金 & 初始庫存 -->
+    <div class="settings-area">
+      <div class="setting-box">
+        <span>💰 我一開始帶了多少錢： $</span>
+        <input type="number" id="initialFundsInput" value="0" min="0" step="1">
+      </div>
+      <div class="setting-box stock">
+        <span>📦 我總共帶了幾樣貨：</span>
+        <input type="number" id="initialStockInput" value="0" min="0" step="1">
+      </div>
     </div>
 
     <div class="stats">
@@ -332,13 +363,13 @@
         <div class="stat-label">目前手頭現金</div>
         <div class="stat-value cash-text" id="currentCash">$0</div>
       </div>
+      <div class="stat-item" style="text-align: left;">
+        <div class="stat-label">剩餘貨品總數</div>
+        <div class="stat-value stock-text" id="remainingStock">0</div>
+      </div>
       <div class="stat-item">
         <div class="stat-label">總成本</div>
         <div class="stat-value cost-text" id="totalCost">$0</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">總售價</div>
-        <div class="stat-value price-text" id="totalPrice">$0</div>
       </div>
       <div class="stat-item">
         <div class="stat-label">總利潤</div>
@@ -347,23 +378,28 @@
     </div>
   </div>
 
+  <!-- 新增表單，加入「賣出數量」 -->
   <div class="quick-add">
     <div class="form-row">
-      <div class="input-group" style="flex: 2 1 140px;">
-        <label>🏷️ 品項</label>
-        <input type="text" id="descInput" placeholder="例如：二手書、手工餅乾" maxlength="30">
+      <div class="input-group" style="flex: 2 1 120px;">
+        <label>🛍️ 我賣了什麼</label>
+        <input type="text" id="descInput" placeholder="例如：二手書" maxlength="30">
+      </div>
+      <div class="input-group" style="flex: 0.8 1 80px;">
+        <label>🔢 賣出數量</label>
+        <input type="number" id="qtyInput" placeholder="1" min="1" step="1" value="1">
       </div>
       <div class="input-group">
-        <label>💸 成本</label>
+        <label>💸 花費成本</label>
         <input type="number" id="costInput" placeholder="0" min="0" step="0.01" value="0">
       </div>
       <div class="input-group">
-        <label>💰 售價</label>
+        <label>💰 賣出總價</label>
         <input type="number" id="priceInput" placeholder="0" min="0" step="0.01">
       </div>
-      <div class="input-group" style="flex: 1.5 1 120px;">
+      <div class="input-group" style="flex: 1.5 1 100px;">
         <label>📝 備註</label>
-        <input type="text" id="noteInput" placeholder="買家、數量…" maxlength="40">
+        <input type="text" id="noteInput" placeholder="給誰/數量" maxlength="40">
       </div>
       <button class="btn-add" id="addBtn">＋ 記錄</button>
     </div>
@@ -384,10 +420,12 @@
 <script>
 (function() {
   var STORAGE_KEY = 'school_stall_account_records';
-  var FUNDS_KEY = 'school_stall_initial_funds'; // 儲存期初資金
+  var FUNDS_KEY = 'school_stall_initial_funds';
+  var STOCK_KEY = 'school_stall_initial_stock'; // 儲存初始庫存
 
   var records = [];
   var initialFunds = 0;
+  var initialStock = 0;
 
   function generateId() {
     return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -400,16 +438,18 @@
   function loadData() {
     try {
       var storedFunds = localStorage.getItem(FUNDS_KEY);
-      if (storedFunds !== null) {
-        initialFunds = Number(storedFunds) || 0;
-      }
+      if (storedFunds !== null) initialFunds = Number(storedFunds) || 0;
       
+      var storedStock = localStorage.getItem(STOCK_KEY);
+      if (storedStock !== null) initialStock = Number(storedStock) || 0;
+
       var stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         var parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
           records = parsed.map(function(r) {
             r.id = r.id || generateId();
+            r.qty = Number(r.qty) || 1; // 如果舊資料沒有數量，預設給 1
             r.cost = Number(r.cost) || 0;
             r.price = Number(r.price) || 0;
             r.note = r.note || '';
@@ -426,13 +466,15 @@
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
       localStorage.setItem(FUNDS_KEY, initialFunds);
+      localStorage.setItem(STOCK_KEY, initialStock);
     } catch (e) {}
   }
 
   var initialFundsInput = document.getElementById('initialFundsInput');
+  var initialStockInput = document.getElementById('initialStockInput');
   var currentCashEl = document.getElementById('currentCash');
+  var remainingStockEl = document.getElementById('remainingStock');
   var totalCostEl = document.getElementById('totalCost');
-  var totalPriceEl = document.getElementById('totalPrice');
   var totalProfitEl = document.getElementById('totalProfit');
   var recordsListEl = document.getElementById('recordsList');
   var recordCountEl = document.getElementById('recordCount');
@@ -443,25 +485,31 @@
   }
 
   function render() {
-    var totalCost = 0, totalPrice = 0, totalProfit = 0;
+    var totalCost = 0, totalPrice = 0, totalProfit = 0, totalSoldQty = 0;
 
     records.forEach(function(rec) {
       var cost = Number(rec.cost) || 0;
       var price = Number(rec.price) || 0;
+      var qty = Number(rec.qty) || 1;
       var profit = price - cost;
+      
       totalCost += cost;
       totalPrice += price;
       totalProfit += profit;
+      totalSoldQty += qty;
     });
 
-    // 計算目前手頭現金 = 期初資金 + 總利潤 (因為利潤就是收到的錢減去花掉的成本)
     var currentCash = initialFunds + totalProfit;
+    // 剩餘庫存 = 初始庫存 - 總賣出數量
+    var remainingStock = initialStock - totalSoldQty;
 
     currentCashEl.textContent = '$' + formatMoney(currentCash);
     currentCashEl.style.color = currentCash < 0 ? '#c7254e' : '#d97706';
 
+    remainingStockEl.textContent = remainingStock + ' 件';
+    remainingStockEl.style.color = remainingStock < 0 ? '#c7254e' : '#166534';
+
     totalCostEl.textContent = '$' + formatMoney(totalCost);
-    totalPriceEl.textContent = '$' + formatMoney(totalPrice);
     totalProfitEl.textContent = '$' + formatMoney(totalProfit);
     totalProfitEl.style.color = totalProfit < 0 ? '#c7254e' : '#2b6ed7';
 
@@ -479,6 +527,7 @@
     records.forEach(function(rec) {
       var cost = Number(rec.cost) || 0;
       var price = Number(rec.price) || 0;
+      var qty = Number(rec.qty) || 1;
       var profit = price - cost;
       var profitClass = profit < 0 ? 'num-profit negative' : 'num-profit';
       var desc = rec.desc || '未命名';
@@ -492,6 +541,7 @@
             '<div class="record-main">' +
               '<div class="record-desc" title="' + desc + '">' + desc + '</div>' +
               '<div class="record-meta">' +
+                '<span class="qty-badge">賣出 ' + qty + ' 個</span>' +
                 '<span>📅 ' + dateStr + '</span>' +
                 note +
               '</div>' +
@@ -533,20 +583,24 @@
     render();
   }
 
-  function addRecord(desc, cost, price, note) {
+  function addRecord(desc, qty, cost, price, note) {
     var trimmedDesc = desc.trim();
-    if (!trimmedDesc) { alert('請輸入品項名稱'); return false; }
+    if (!trimmedDesc) { alert('請輸入賣了什麼'); return false; }
+
+    var numQty = parseInt(qty);
+    if (isNaN(numQty) || numQty <= 0) { alert('賣出數量必須大於 0'); return false; }
 
     var numCost = parseFloat(cost);
-    if (isNaN(numCost) || numCost < 0) { alert('成本請填 0 或正數'); return false; }
+    if (isNaN(numCost) || numCost < 0) { alert('花費成本請填 0 或正數'); return false; }
 
     var numPrice = parseFloat(price);
-    if (isNaN(numPrice) || numPrice < 0) { alert('售價請填 0 或正數'); return false; }
+    if (isNaN(numPrice) || numPrice < 0) { alert('賣出總價請填 0 或正數'); return false; }
     if (numPrice === 0 && numCost === 0) { alert('成本與售價不能同時為 0'); return false; }
 
     records.unshift({
       id: generateId(),
       desc: trimmedDesc,
+      qty: numQty,
       cost: numCost,
       price: numPrice,
       note: note.trim(),
@@ -572,16 +626,18 @@
       return;
     }
 
-    var headers = ['日期', '品項', '成本', '售價', '利潤', '備註'];
+    var headers = ['日期', '品項', '賣出數量', '成本', '售價', '利潤', '備註'];
     var rows = [headers.join(',')];
 
     records.forEach(function(rec) {
       var cost = Number(rec.cost) || 0;
       var price = Number(rec.price) || 0;
+      var qty = Number(rec.qty) || 1;
       var profit = price - cost;
       var row = [
         rec.date || '',
         '"' + (rec.desc || '').replace(/"/g, '""') + '"',
+        qty,
         cost,
         price,
         profit,
@@ -604,16 +660,24 @@
 
   loadData();
   initialFundsInput.value = initialFunds;
+  initialStockInput.value = initialStock;
   render();
 
-  // 監聽期初資金的修改
+  // 監聽修改
   initialFundsInput.addEventListener('input', function() {
     initialFunds = Number(this.value) || 0;
     saveData();
     render();
   });
+  
+  initialStockInput.addEventListener('input', function() {
+    initialStock = Number(this.value) || 0;
+    saveData();
+    render();
+  });
 
   var descInput = document.getElementById('descInput');
+  var qtyInput = document.getElementById('qtyInput');
   var costInput = document.getElementById('costInput');
   var priceInput = document.getElementById('priceInput');
   var noteInput = document.getElementById('noteInput');
@@ -622,9 +686,10 @@
   var clearAllBtn = document.getElementById('clearAllBtn');
 
   addBtn.addEventListener('click', function() {
-    var ok = addRecord(descInput.value, costInput.value, priceInput.value, noteInput.value);
+    var ok = addRecord(descInput.value, qtyInput.value, costInput.value, priceInput.value, noteInput.value);
     if (ok) {
       descInput.value = '';
+      qtyInput.value = '1';
       costInput.value = '0';
       priceInput.value = '';
       noteInput.value = '';
