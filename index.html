@@ -421,7 +421,7 @@
 (function() {
   var STORAGE_KEY = 'school_stall_account_records';
   var FUNDS_KEY = 'school_stall_initial_funds';
-  var STOCK_KEY = 'school_stall_initial_stock'; // 儲存初始庫存
+  var STOCK_KEY = 'school_stall_initial_stock';
 
   var records = [];
   var initialFunds = 0;
@@ -449,7 +449,7 @@
         if (Array.isArray(parsed)) {
           records = parsed.map(function(r) {
             r.id = r.id || generateId();
-            r.qty = Number(r.qty) || 1; // 如果舊資料沒有數量，預設給 1
+            r.qty = Number(r.qty) || 1;
             r.cost = Number(r.cost) || 0;
             r.price = Number(r.price) || 0;
             r.note = r.note || '';
@@ -500,7 +500,6 @@
     });
 
     var currentCash = initialFunds + totalProfit;
-    // 剩餘庫存 = 初始庫存 - 總賣出數量
     var remainingStock = initialStock - totalSoldQty;
 
     currentCashEl.textContent = '$' + formatMoney(currentCash);
@@ -663,7 +662,6 @@
   initialStockInput.value = initialStock;
   render();
 
-  // 監聽修改
   initialFundsInput.addEventListener('input', function() {
     initialFunds = Number(this.value) || 0;
     saveData();
