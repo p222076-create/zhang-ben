@@ -3,18 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>學校擺攤庫存管理</title>
+<title>學校擺攤收銀機</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
-    background: #f0f4f8; color: #1e293b; padding: 1rem;
+    background: #e8f4f8; /* 稍微改成偏藍的底色，讓你一眼看出是新版 */
+    color: #1e293b; padding: 1rem;
   }
   .container { max-width: 800px; margin: 0 auto; }
   
   .header { text-align: center; margin-bottom: 1.5rem; }
   .header h1 { font-size: 1.8rem; color: #0f172a; font-weight: 800; }
   
+  /* 現金橫幅 */
   .cash-banner {
     background: #fef08a; border: 2px solid #eab308; border-radius: 16px;
     padding: 1rem; display: flex; justify-content: space-between; align-items: center;
@@ -26,26 +28,30 @@
     font-size: 1rem; font-weight: 700; color: #854d0e; text-align: center;
   }
 
-  /* 超大分頁按鈕 */
+  /* 分頁按鈕 */
   .tabs { display: flex; gap: 10px; margin-bottom: 1.5rem; }
   .tab-btn {
     flex: 1; padding: 1rem; border: none; background: #e2e8f0; color: #475569;
-    font-weight: 800; font-size: 1.1rem; border-radius: 16px; cursor: pointer;
+    font-weight: 800; font-size: 1.1rem; border-radius: 16px; cursor: pointer; transition: 0.2s;
   }
   .tab-btn.active { background: #2563eb; color: white; box-shadow: 0 4px 10px rgba(37,99,235,0.3); }
 
   .panel { display: none; }
-  .panel.active { display: block; }
+  .panel.active { display: block; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+  /* 卡片與表單 */
   .card { background: white; padding: 1.2rem; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
   .card h3 { margin-bottom: 1rem; color: #1e293b; font-size: 1.1rem; }
   
   .form-group { margin-bottom: 10px; }
   .form-group label { display: block; font-size: 0.85rem; font-weight: 700; color: #64748b; margin-bottom: 5px; }
-  .form-group input, .form-group select {
+  .form-group input {
     width: 100%; padding: 0.8rem; border: 1.5px solid #cbd5e1; border-radius: 10px;
     font-size: 1rem; font-family: inherit;
   }
+  .form-row { display: flex; gap: 10px; }
+  .form-row .form-group { flex: 1; }
   
   .btn {
     width: 100%; padding: 1rem; border: none; border-radius: 12px;
@@ -53,7 +59,9 @@
     cursor: pointer; margin-top: 5px;
   }
   .btn:active { transform: scale(0.98); }
+  .btn-sell { background: #16a34a; }
 
+  /* 庫存列表 */
   .list-item {
     background: white; padding: 1rem; border-radius: 12px; margin-bottom: 10px;
     display: flex; justify-content: space-between; align-items: center;
@@ -61,21 +69,63 @@
   }
   .item-info h4 { font-size: 1.1rem; color: #0f172a; margin-bottom: 4px; }
   .item-info p { font-size: 0.85rem; color: #64748b; }
-  
   .item-stats { text-align: right; }
   .item-stats .qty { font-size: 1.3rem; font-weight: 800; color: #16a34a; }
-  .item-stats .cost { font-size: 0.8rem; color: #d97706; font-weight: 700; }
-  
   .delete-btn { background: #fee2e2; color: #dc2626; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 700; margin-left: 10px; cursor: pointer; }
 
+  /* 收銀機按鈕 */
+  .pos-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;
+  }
+  .pos-btn {
+    background: #e0f2fe; border: 2px solid #7dd3fc; border-radius: 16px;
+    padding: 1.2rem 1rem; text-align: center; cursor: pointer; transition: 0.1s;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+  }
+  .pos-btn:active { transform: scale(0.95); background: #bae6fd; }
+  .pos-btn .p-name { font-weight: 800; font-size: 1.1rem; color: #0369a1; margin-bottom: 4px; }
+  .pos-btn .p-price { font-weight: 700; font-size: 1.2rem; color: #0c4a6e; }
+  .pos-btn .p-stock { font-size: 0.8rem; color: #0284c7; margin-top: 4px; }
+  .pos-btn .p-promo { font-size: 0.75rem; color: #d97706; font-weight: 700; margin-top: 4px; background: #fef3c7; padding: 2px 6px; border-radius: 4px; }
+  
+  .pos-btn.disabled { background: #f1f5f9; border-color: #e2e8f0; opacity: 0.6; cursor: not-allowed; }
+  .pos-btn.disabled .p-name, .pos-btn.disabled .p-price, .pos-btn.disabled .p-stock { color: #94a3b8; }
+
   .empty-text { text-align: center; color: #94a3b8; padding: 2rem; font-weight: 600; }
+
+  /* 結帳彈出視窗 */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 100;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal-content {
+    background: white; padding: 1.5rem; border-radius: 20px; width: 90%; max-width: 400px;
+    text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  }
+  .modal-content h2 { font-size: 1.4rem; color: #1e293b; margin-bottom: 0.5rem; }
+  
+  /* 優惠按鈕 */
+  .promo-btns { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
+  .promo-btn {
+    background: #f0fdf4; border: 2px solid #86efac; border-radius: 12px;
+    padding: 1rem; display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer; font-weight: 700; color: #166534; transition: 0.1s;
+  }
+  .promo-btn:active { background: #dcfce7; transform: scale(0.98); }
+  .promo-btn.primary { background: #e0f2fe; border-color: #7dd3fc; color: #0369a1; }
+  .promo-btn.primary:active { background: #bae6fd; }
+  
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btns .btn { flex: 1; margin: 0; }
+  .btn-cancel { background: #e2e8f0; color: #475569; }
 </style>
 </head>
 <body>
 <div class="container">
 
   <div class="header">
-    <h1>🏫 擺攤庫存管理</h1>
+    <h1>🏫 擺攤收銀機 (v6)</h1>
   </div>
 
   <div class="cash-banner">
@@ -90,67 +140,89 @@
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" id="btnTabStock" onclick="switchTab('stock')">📦 庫存管理</button>
-    <button class="tab-btn" id="btnTabSell" onclick="switchTab('sell')">🛒 賣出記帳</button>
+    <button class="tab-btn" id="btnTabStock" onclick="switchTab('stock')">📦 庫存與定價</button>
+    <button class="tab-btn active" id="btnTabSell" onclick="switchTab('sell')">🛒 點擊結帳</button>
   </div>
 
   <!-- 庫存管理區塊 -->
-  <div id="panelStock" class="panel active">
+  <div id="panelStock" class="panel">
     <div class="card">
       <h3>📦 新增進貨商品</h3>
       <div class="form-group">
         <label>商品名稱</label>
-        <input type="text" id="prodName" placeholder="例如：二手書、可樂">
+        <input type="text" id="prodName" placeholder="例如：可樂、二手書">
       </div>
-      <div class="form-group">
-        <label>進貨數量</label>
-        <input type="number" id="prodQty" placeholder="例如：10">
+      <div class="form-row">
+        <div class="form-group">
+          <label>進貨數量</label>
+          <input type="number" id="prodQty" placeholder="10">
+        </div>
+        <div class="form-group">
+          <label>總共花費成本</label>
+          <input type="number" id="prodCost" placeholder="100">
+        </div>
       </div>
-      <div class="form-group">
-        <label>總共花了多少錢 (成本)</label>
-        <input type="number" id="prodCost" placeholder="例如：200">
+      <div class="form-row" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cbd5e1;">
+        <div class="form-group">
+          <label>單個定價</label>
+          <input type="number" id="prodPrice" placeholder="20">
+        </div>
+        <div class="form-group">
+          <label>優惠數量 (買幾個)</label>
+          <input type="number" id="promoQty" placeholder="例如：3">
+        </div>
+        <div class="form-group">
+          <label>優惠總價 (算多少)</label>
+          <input type="number" id="promoPrice" placeholder="例如：50">
+        </div>
       </div>
-      <button class="btn" onclick="addProduct()">＋ 建立商品與庫存</button>
+      <button class="btn" onclick="addProduct()">＋ 建立商品</button>
     </div>
 
     <h3 style="margin-bottom: 1rem;">目前庫存清單</h3>
     <div id="stockList"></div>
   </div>
 
-  <!-- 賣出記帳區塊 -->
-  <div id="panelSell" class="panel">
-    <div class="card">
-      <h3>🛒 記錄賣出</h3>
-      <div class="form-group">
-        <label>選擇賣出的商品</label>
-        <select id="sellProdId"></select>
-      </div>
-      <div class="form-group">
-        <label>賣出數量</label>
-        <input type="number" id="sellQty" value="1" min="1">
-      </div>
-      <div class="form-group">
-        <label>單個賣多少錢 (售價)</label>
-        <input type="number" id="sellPrice" placeholder="例如：50">
-      </div>
-      <button class="btn" onclick="addSale()">＋ 記錄這筆交易</button>
+  <!-- 賣出記帳 (收銀機) 區塊 -->
+  <div id="panelSell" class="panel active">
+    <div class="card" style="background: #f8fafc; padding: 1rem;">
+      <h3 style="font-size: 1rem; color: #64748b; margin-bottom: 0;">👇 點擊下方商品直接結帳</h3>
     </div>
+    
+    <div class="pos-grid" id="posGrid"></div>
 
-    <h3 style="margin-bottom: 1rem;">今天已賣出</h3>
+    <h3 style="margin-top: 2rem; margin-bottom: 1rem;">今天已賣出</h3>
     <div id="salesList"></div>
   </div>
 
 </div>
 
+<!-- 結帳彈出視窗 -->
+<div class="modal-overlay" id="sellModal">
+  <div class="modal-content">
+    <h2 id="modalTitle">商品名稱</h2>
+    <div style="font-weight: 700; color: #64748b; margin-bottom: 1rem;">請選擇結帳方式：</div>
+    
+    <div class="promo-btns" id="promoBtns">
+      <!-- 動態生成按鈕 -->
+    </div>
+    
+    <div class="modal-btns">
+      <button class="btn btn-cancel" onclick="closeModal()">取消</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  // 資料儲存
-  var fundsKey = 'stall_v3_funds';
-  var prodsKey = 'stall_v3_prods';
-  var salesKey = 'stall_v3_sales';
+  var fundsKey = 'stall_v6_funds';
+  var prodsKey = 'stall_v6_prods';
+  var salesKey = 'stall_v6_sales';
 
   var initialFunds = Number(localStorage.getItem(fundsKey)) || 0;
   var products = JSON.parse(localStorage.getItem(prodsKey)) || [];
   var sales = JSON.parse(localStorage.getItem(salesKey)) || [];
+
+  var currentSelectedProdId = null;
 
   function save() {
     localStorage.setItem(fundsKey, initialFunds);
@@ -182,50 +254,65 @@
     var current = initialFunds + totalProfit;
     document.getElementById('currentCash').innerText = '$' + current;
 
-    // 渲染庫存
+    // 1. 渲染庫存清單
     var stockHtml = '';
-    var selectHtml = '<option value="">-- 請選擇 --</option>';
     if (products.length === 0) {
       stockHtml = '<div class="empty-text">還沒有商品，請先在上面建立。</div>';
     } else {
       products.forEach(function(p) {
+        var promoText = (p.promoQty > 1 && p.promoPrice > 0) ? ' | 優惠: 買'+p.promoQty+'個$'+p.promoPrice : '';
         stockHtml += 
           '<div class="list-item">' +
             '<div class="item-info">' +
               '<h4>' + p.name + '</h4>' +
-              '<p>進貨 ' + p.initQty + ' 個 / 單價成本 $' + (p.cost/p.initQty).toFixed(1) + '</p>' +
+              '<p>單價 $' + p.sellPrice + promoText + '</p>' +
             '</div>' +
             '<div style="display:flex; align-items:center;">' +
               '<div class="item-stats">' +
                 '<div class="qty">剩 ' + p.remainQty + ' 個</div>' +
-                '<div class="cost">總花費 $' + p.cost + '</div>' +
               '</div>' +
               '<button class="delete-btn" onclick="deleteProduct(\'' + p.id + '\')">✕</button>' +
             '</div>' +
           '</div>';
-        
-        if (p.remainQty > 0) {
-          selectHtml += '<option value="' + p.id + '">' + p.name + ' (剩 ' + p.remainQty + ' 個)</option>';
-        }
       });
     }
     document.getElementById('stockList').innerHTML = stockHtml;
-    document.getElementById('sellProdId').innerHTML = selectHtml;
 
-    // 渲染今日賣出
+    // 2. 渲染收銀機按鈕
+    var posHtml = '';
+    var hasStock = false;
+    products.forEach(function(p) {
+      if (p.remainQty > 0) {
+        hasStock = true;
+        var promoTag = (p.promoQty > 1 && p.promoPrice > 0) ? '<div class="p-promo">買' + p.promoQty + '個 $' + p.promoPrice + '</div>' : '';
+        posHtml += 
+          '<div class="pos-btn" onclick="openSellModal(\'' + p.id + '\')">' +
+            '<div class="p-name">' + p.name + '</div>' +
+            '<div class="p-price">$' + p.sellPrice + '</div>' +
+            promoTag +
+            '<div class="p-stock">剩 ' + p.remainQty + ' 個</div>' +
+          '</div>';
+      }
+    });
+    if (!hasStock) {
+      posHtml = '<div class="empty-text" style="grid-column: 1/-1;">目前沒有可賣的商品，請先去庫存區建立。</div>';
+    }
+    document.getElementById('posGrid').innerHTML = posHtml;
+
+    // 3. 渲染今日賣出
     var today = new Date().toISOString().split('T')[0];
     var salesHtml = '';
-    sales.forEach(function(s) {
+    sales.slice().reverse().forEach(function(s) {
       if (s.date === today) {
         salesHtml += 
-          '<div class="list-item">' +
+          '<div class="list-item" style="border-left-color: #16a34a;">' +
             '<div class="item-info">' +
               '<h4>' + s.name + ' (賣出 ' + s.qty + ' 個)</h4>' +
-              '<p>成本: $' + s.cost + ' | 售價: $' + s.price + '</p>' +
+              '<p>總收: $' + s.price + ' | 成本: $' + s.cost + '</p>' +
             '</div>' +
             '<div style="display:flex; align-items:center;">' +
               '<div class="item-stats">' +
-                '<div class="qty" style="color:#2563eb;">利潤 $' + (s.price - s.cost) + '</div>' +
+                '<div class="qty" style="color:#2563eb; font-size:1.1rem;">利潤 $' + (s.price - s.cost) + '</div>' +
               '</div>' +
               '<button class="delete-btn" onclick="deleteSale(\'' + s.id + '\')">✕</button>' +
             '</div>' +
@@ -241,13 +328,19 @@
     save(); updateUI();
   };
 
+  // 新增商品
   function addProduct() {
     var name = document.getElementById('prodName').value.trim();
     var qty = parseInt(document.getElementById('prodQty').value);
     var cost = parseFloat(document.getElementById('prodCost').value);
+    var sellPrice = parseFloat(document.getElementById('prodPrice').value);
+    
+    // 優惠設定 (可選)
+    var promoQty = parseInt(document.getElementById('promoQty').value) || 0;
+    var promoPrice = parseFloat(document.getElementById('promoPrice').value) || 0;
 
-    if (!name || isNaN(qty) || qty <= 0 || isNaN(cost) || cost < 0) {
-      alert('請完整填寫商品名稱、數量與成本！'); return;
+    if (!name || isNaN(qty) || qty <= 0 || isNaN(cost) || cost < 0 || isNaN(sellPrice) || sellPrice < 0) {
+      alert('請完整填寫商品名稱、數量、成本與單個定價！'); return;
     }
 
     products.push({
@@ -255,13 +348,19 @@
       name: name,
       initQty: qty,
       remainQty: qty,
-      cost: cost
+      cost: cost,
+      sellPrice: sellPrice,
+      promoQty: promoQty,
+      promoPrice: promoPrice
     });
     
     save(); updateUI();
     document.getElementById('prodName').value = '';
     document.getElementById('prodQty').value = '';
     document.getElementById('prodCost').value = '';
+    document.getElementById('prodPrice').value = '';
+    document.getElementById('promoQty').value = '';
+    document.getElementById('promoPrice').value = '';
     alert('商品建立成功！');
   }
 
@@ -272,38 +371,70 @@
     }
   }
 
-  function addSale() {
-    var id = document.getElementById('sellProdId').value;
-    var qty = parseInt(document.getElementById('sellQty').value);
-    var price = parseFloat(document.getElementById('sellPrice').value);
+  // 開啟結帳視窗
+  window.openSellModal = function(id) {
+    var prod = products.find(function(p) { return p.id === id; });
+    if (!prod) return;
+    
+    currentSelectedProdId = id;
+    document.getElementById('modalTitle').innerText = prod.name;
+    
+    var promoHtml = '';
+    
+    // 生成「單買」按鈕
+    promoHtml += 
+      '<div class="promo-btn primary" onclick="confirmSale(1, ' + prod.sellPrice + ')">' +
+        '<span>單買 1 個</span>' +
+        '<span>$' + prod.sellPrice + '</span>' +
+      '</div>';
 
-    if (!id || isNaN(qty) || qty <= 0 || isNaN(price) || price < 0) {
-      alert('請選擇商品並填寫正確的數量與售價！'); return;
+    // 生成「優惠」按鈕 (如果有設定，且庫存足夠)
+    if (prod.promoQty > 1 && prod.promoPrice > 0 && prod.remainQty >= prod.promoQty) {
+      promoHtml += 
+        '<div class="promo-btn" onclick="confirmSale(' + prod.promoQty + ', ' + prod.promoPrice + ')">' +
+          '<span>優惠買 ' + prod.promoQty + ' 個</span>' +
+          '<span>$' + prod.promoPrice + '</span>' +
+        '</div>';
     }
 
-    var prod = products.find(function(p) { return p.id === id; });
+    document.getElementById('promoBtns').innerHTML = promoHtml;
+    document.getElementById('sellModal').classList.add('active');
+  };
+
+  window.closeModal = function() {
+    document.getElementById('sellModal').classList.remove('active');
+    currentSelectedProdId = null;
+  };
+
+  // 確認結帳 (傳入買的數量和總價)
+  window.confirmSale = function(qty, totalPrice) {
+    if (!currentSelectedProdId) return;
+    
+    var prod = products.find(function(p) { return p.id === currentSelectedProdId; });
+    if (!prod) return;
+
     if (prod.remainQty < qty) {
       alert('庫存不足！只剩 ' + prod.remainQty + ' 個。'); return;
     }
 
     var unitCost = prod.cost / prod.initQty;
+    var totalCost = unitCost * qty;
+
     prod.remainQty -= qty;
 
     sales.push({
       id: Date.now().toString(),
-      prodId: id,
+      prodId: prod.id,
       name: prod.name,
       qty: qty,
-      cost: unitCost * qty,
-      price: price * qty,
+      cost: totalCost,
+      price: totalPrice,
       date: new Date().toISOString().split('T')[0]
     });
 
     save(); updateUI();
-    document.getElementById('sellQty').value = '1';
-    document.getElementById('sellPrice').value = '';
-    alert('賣出記錄成功！');
-  }
+    closeModal();
+  };
 
   function deleteSale(id) {
     if(confirm('確定刪除這筆交易？庫存會加回去喔。')) {
@@ -317,7 +448,6 @@
     }
   }
 
-  // 初始化
   updateUI();
 </script>
 </body>
