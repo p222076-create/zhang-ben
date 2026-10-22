@@ -31,12 +31,39 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 1.6rem;
     gap: 1rem;
   }
   .greeting h1 { font-size: 1.7rem; font-weight: 700; color: #0b1220; }
   .greeting p { font-size: 0.88rem; color: #5e6a7d; margin-top: 4px; }
+
+  /* 新增的期初資金設定區 */
+  .initial-funds {
+    background: #fffbeb;
+    border: 1.5px dashed #fcd34d;
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: #b45309;
+    font-size: 0.95rem;
+  }
+  .initial-funds input {
+    width: 100px;
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid #fcd34d;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #b45309;
+    background: white;
+    outline: none;
+  }
 
   .stats {
     display: flex;
@@ -45,6 +72,9 @@
     background: #f0f3fa;
     padding: 0.8rem 1.4rem;
     border-radius: 20px;
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 0.5rem;
   }
   .stat-item { text-align: right; min-width: 74px; }
   .stat-label {
@@ -55,10 +85,13 @@
     font-weight: 600;
   }
   .stat-value { font-size: 1.25rem; font-weight: 700; line-height: 1.3; }
+  
+  /* 特別強調手頭現金的顏色 */
+  .cash-text { color: #d97706; font-size: 1.4rem; }
+  
   .cost-text { color: #b45309; }
   .price-text { color: #1e7e34; }
   .profit-text { color: #2b6ed7; }
-  .today-text { color: #7c3aed; }
 
   .quick-add {
     background: #f8fafd;
@@ -271,7 +304,6 @@
   @media (max-width: 760px) {
     .app-container { padding: 1.3rem 1rem; }
     .header { flex-direction: column; align-items: flex-start; }
-    .stats { width: 100%; justify-content: space-between; }
     .form-row { flex-direction: column; align-items: stretch; }
     .btn-add { width: 100%; }
     .record-desc { max-width: 130px; }
@@ -284,11 +316,22 @@
 <div class="app-container">
 
   <div class="header">
-    <div class="greeting">
+    <div class="greeting" style="width: 100%;">
       <h1>🏫 擺攤記帳</h1>
       <p>⚡ 成本可填 0 · 自動算利潤 · 支援匯出備份</p>
     </div>
+    
+    <!-- 新增：期初資金設定 -->
+    <div class="initial-funds">
+      <span>💰 我一開始帶了多少錢： $</span>
+      <input type="number" id="initialFundsInput" value="0" min="0" step="1">
+    </div>
+
     <div class="stats">
+      <div class="stat-item" style="text-align: left;">
+        <div class="stat-label">目前手頭現金</div>
+        <div class="stat-value cash-text" id="currentCash">$0</div>
+      </div>
       <div class="stat-item">
         <div class="stat-label">總成本</div>
         <div class="stat-value cost-text" id="totalCost">$0</div>
@@ -300,10 +343,6 @@
       <div class="stat-item">
         <div class="stat-label">總利潤</div>
         <div class="stat-value profit-text" id="totalProfit">$0</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">今日利潤</div>
-        <div class="stat-value today-text" id="todayProfit">$0</div>
       </div>
     </div>
   </div>
@@ -345,8 +384,10 @@
 <script>
 (function() {
   var STORAGE_KEY = 'school_stall_account_records';
+  var FUNDS_KEY = 'school_stall_initial_funds'; // 儲存期初資金
 
   var records = [];
+  var initialFunds = 0;
 
   function generateId() {
     return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -356,8 +397,13 @@
     return new Date().toISOString().split('T')[0];
   }
 
-  function loadRecords() {
+  function loadData() {
     try {
+      var storedFunds = localStorage.getItem(FUNDS_KEY);
+      if (storedFunds !== null) {
+        initialFunds = Number(storedFunds) || 0;
+      }
+      
       var stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         var parsed = JSON.parse(stored);
@@ -376,16 +422,18 @@
     records = [];
   }
 
-  function saveRecords() {
+  function saveData() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      localStorage.setItem(FUNDS_KEY, initialFunds);
     } catch (e) {}
   }
 
+  var initialFundsInput = document.getElementById('initialFundsInput');
+  var currentCashEl = document.getElementById('currentCash');
   var totalCostEl = document.getElementById('totalCost');
   var totalPriceEl = document.getElementById('totalPrice');
   var totalProfitEl = document.getElementById('totalProfit');
-  var todayProfitEl = document.getElementById('todayProfit');
   var recordsListEl = document.getElementById('recordsList');
   var recordCountEl = document.getElementById('recordCount');
 
@@ -395,8 +443,7 @@
   }
 
   function render() {
-    var totalCost = 0, totalPrice = 0, totalProfit = 0, todayProfit = 0;
-    var today = todayStr();
+    var totalCost = 0, totalPrice = 0, totalProfit = 0;
 
     records.forEach(function(rec) {
       var cost = Number(rec.cost) || 0;
@@ -405,15 +452,18 @@
       totalCost += cost;
       totalPrice += price;
       totalProfit += profit;
-      if (rec.date === today) todayProfit += profit;
     });
+
+    // 計算目前手頭現金 = 期初資金 + 總利潤 (因為利潤就是收到的錢減去花掉的成本)
+    var currentCash = initialFunds + totalProfit;
+
+    currentCashEl.textContent = '$' + formatMoney(currentCash);
+    currentCashEl.style.color = currentCash < 0 ? '#c7254e' : '#d97706';
 
     totalCostEl.textContent = '$' + formatMoney(totalCost);
     totalPriceEl.textContent = '$' + formatMoney(totalPrice);
     totalProfitEl.textContent = '$' + formatMoney(totalProfit);
     totalProfitEl.style.color = totalProfit < 0 ? '#c7254e' : '#2b6ed7';
-    todayProfitEl.textContent = '$' + formatMoney(todayProfit);
-    todayProfitEl.style.color = todayProfit < 0 ? '#c7254e' : '#7c3aed';
 
     if (records.length === 0) {
       recordsListEl.innerHTML =
@@ -479,7 +529,7 @@
 
   function deleteRecordById(id) {
     records = records.filter(function(r) { return r.id !== id; });
-    saveRecords();
+    saveData();
     render();
   }
 
@@ -502,7 +552,7 @@
       note: note.trim(),
       date: todayStr()
     });
-    saveRecords();
+    saveData();
     render();
     return true;
   }
@@ -511,7 +561,7 @@
     if (records.length === 0) return;
     if (confirm('確定要刪除所有交易記錄嗎？此動作無法復原。')) {
       records = [];
-      saveRecords();
+      saveData();
       render();
     }
   }
@@ -540,7 +590,6 @@
       rows.push(row.join(','));
     });
 
-    // 加上 UTF-8 BOM，Excel 開中文才不會亂碼
     var csvContent = '\uFEFF' + rows.join('\r\n');
     var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     var url = URL.createObjectURL(blob);
@@ -553,8 +602,16 @@
     URL.revokeObjectURL(url);
   }
 
-  loadRecords();
+  loadData();
+  initialFundsInput.value = initialFunds;
   render();
+
+  // 監聽期初資金的修改
+  initialFundsInput.addEventListener('input', function() {
+    initialFunds = Number(this.value) || 0;
+    saveData();
+    render();
+  });
 
   var descInput = document.getElementById('descInput');
   var costInput = document.getElementById('costInput');
