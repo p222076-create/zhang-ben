@@ -38,26 +38,27 @@
   .greeting h1 { font-size: 1.7rem; font-weight: 700; color: #0b1220; }
   .greeting p { font-size: 0.88rem; color: #5e6a7d; margin-top: 4px; }
 
-  /* 設定區 (資金與庫存) */
+  /* 上方設定區塊：資金與庫存 */
   .settings-area {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 1rem;
+    gap: 12px;
+    margin-bottom: 1.2rem;
     width: 100%;
   }
   .setting-box {
     background: #fffbeb;
-    border: 1.5px dashed #fcd34d;
-    border-radius: 12px;
-    padding: 0.8rem 1rem;
+    border: 2px dashed #fcd34d;
+    border-radius: 16px;
+    padding: 1rem 1.2rem;
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-weight: 600;
+    justify-content: space-between;
+    gap: 10px;
+    font-weight: 700;
     color: #b45309;
-    font-size: 0.95rem;
-    flex: 1 1 200px;
+    font-size: 1.05rem;
+    flex: 1 1 250px;
   }
   .setting-box.stock {
     background: #f0fdf4;
@@ -65,49 +66,53 @@
     color: #166534;
   }
   .setting-box input {
-    width: 80px;
-    padding: 0.4rem 0.6rem;
-    border-radius: 8px;
-    border: 1px solid #fcd34d;
+    width: 90px;
+    padding: 0.6rem 0.8rem;
+    border-radius: 10px;
+    border: 2px solid #fcd34d;
     font-family: inherit;
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: #b45309;
     background: white;
     outline: none;
+    text-align: center;
   }
   .setting-box.stock input {
     border-color: #86efac;
     color: #166534;
   }
 
+  /* 統計面板 */
   .stats {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.6rem 1.4rem;
-    background: #f0f3fa;
-    padding: 0.8rem 1.4rem;
+    gap: 1rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 1.2rem;
     border-radius: 20px;
     width: 100%;
     justify-content: space-between;
     margin-top: 0.5rem;
   }
-  .stat-item { text-align: right; min-width: 74px; }
+  .stat-item { text-align: left; flex: 1 1 100px; }
   .stat-label {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: #5e6a7d;
-    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    font-weight: 700;
+    margin-bottom: 4px;
   }
-  .stat-value { font-size: 1.25rem; font-weight: 700; line-height: 1.3; }
+  .stat-value { font-size: 1.5rem; font-weight: 800; line-height: 1.2; }
   
-  .cash-text { color: #d97706; font-size: 1.4rem; }
-  .stock-text { color: #166534; font-size: 1.4rem; }
-  .cost-text { color: #b45309; }
-  .price-text { color: #1e7e34; }
-  .profit-text { color: #2b6ed7; }
+  .cash-text { color: #d97706; }
+  .stock-text { color: #166534; }
+  .cost-text { color: #b45309; font-size: 1.1rem; }
+  .profit-text { color: #2563eb; font-size: 1.1rem; }
 
+  /* 輸入表單 */
   .quick-add {
     background: #f8fafd;
     border-radius: 22px;
@@ -124,21 +129,21 @@
   .input-group { flex: 1 1 100px; min-width: 0; }
   .input-group label {
     display: block;
-    font-size: 0.72rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     color: #4a5568;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
   }
   .input-group input {
     width: 100%;
-    padding: 0.7rem 0.9rem;
+    padding: 0.75rem 0.9rem;
     border-radius: 14px;
     border: 1.5px solid #dfe7f0;
     background: white;
     font-family: inherit;
-    font-size: 0.95rem;
+    font-size: 1rem;
     color: #1a1f2e;
     outline: none;
     transition: 0.15s;
@@ -153,19 +158,21 @@
     background: #1a1f2e;
     color: white;
     border: none;
-    padding: 0.7rem 1.6rem;
+    padding: 0.75rem 1.8rem;
     border-radius: 30px;
-    font-weight: 600;
-    font-size: 0.95rem;
+    font-weight: 700;
+    font-size: 1rem;
     cursor: pointer;
-    height: 46px;
+    height: 48px;
     flex: 0 0 auto;
     font-family: inherit;
     transition: 0.2s;
+    box-shadow: 0 4px 12px rgba(26,31,46,0.2);
   }
   .btn-add:hover { background: #0b1220; }
   .btn-add:active { transform: scale(0.98); }
 
+  /* 列表與工具列 */
   .toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -174,14 +181,14 @@
     margin-bottom: 1rem;
     gap: 10px;
   }
-  .toolbar h2 { font-size: 1.05rem; font-weight: 700; color: #1a1f2e; }
+  .toolbar h2 { font-size: 1.1rem; font-weight: 800; color: #1a1f2e; }
   .record-count {
     background: #e9eef3;
-    padding: 0.15rem 0.7rem;
+    padding: 0.2rem 0.8rem;
     border-radius: 40px;
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     color: #2d3748;
-    font-weight: 600;
+    font-weight: 700;
     margin-left: 6px;
   }
   .toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -190,25 +197,26 @@
     background: none;
     border: 1.5px solid #dfe7f0;
     color: #4a5568;
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     cursor: pointer;
-    padding: 7px 14px;
+    padding: 8px 16px;
     border-radius: 30px;
-    font-weight: 600;
+    font-weight: 700;
     font-family: inherit;
     transition: 0.15s;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
   }
   .btn-tool:hover { background: #f0f3fa; border-color: #cbd5e0; }
   .btn-tool.danger:hover { background: #fce9ef; color: #c7254e; border-color: #f5c2d0; }
   .btn-tool.export:hover { background: #e3f5e9; color: #1e7e34; border-color: #b7e0c4; }
 
+  /* 交易記錄列表 */
   .records-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     max-height: 460px;
     overflow-y: auto;
     padding-right: 4px;
@@ -218,7 +226,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.95rem 1.1rem;
+    padding: 1rem 1.2rem;
     background: #ffffff;
     border-radius: 18px;
     border: 1px solid #edf2f9;
@@ -235,18 +243,18 @@
   .record-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     min-width: 0;
     flex: 1;
   }
   .record-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 13px;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
+    font-size: 1.1rem;
     flex-shrink: 0;
     font-weight: 700;
     background: #eef4ff;
@@ -255,8 +263,8 @@
 
   .record-main { min-width: 0; }
   .record-desc {
-    font-weight: 600;
-    font-size: 0.98rem;
+    font-weight: 700;
+    font-size: 1rem;
     color: #1a1f2e;
     white-space: nowrap;
     overflow: hidden;
@@ -264,49 +272,50 @@
     max-width: 180px;
   }
   .record-meta {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     color: #7b8a9e;
     display: flex;
-    gap: 10px;
-    margin-top: 3px;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
     flex-wrap: wrap;
   }
-  .record-meta .note { color: #8b6f3e; }
+  .record-meta .note { color: #8b6f3e; font-weight: 600; }
   
-  /* 顯示賣出數量的標籤 */
+  /* 賣出數量標籤 */
   .qty-badge {
     background: #e0f2fe;
     color: #0369a1;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-weight: 800;
     font-size: 0.75rem;
   }
 
   .record-nums {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     flex-shrink: 0;
     text-align: right;
     flex-wrap: wrap;
     justify-content: flex-end;
   }
-  .num-block { min-width: 52px; }
-  .num-label { font-size: 0.62rem; color: #8b97a9; font-weight: 600; text-transform: uppercase; }
-  .num-val { font-weight: 700; font-size: 0.92rem; }
+  .num-block { min-width: 54px; }
+  .num-label { font-size: 0.65rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 2px;}
+  .num-val { font-weight: 800; font-size: 0.95rem; }
   .num-cost { color: #b45309; }
   .num-price { color: #1e7e34; }
-  .num-profit { color: #2b6ed7; }
+  .num-profit { color: #2563eb; }
   .num-profit.negative { color: #c7254e; }
 
   .delete-item {
     background: none;
     border: none;
-    color: #bcc6d4;
+    color: #cbd5e1;
     cursor: pointer;
-    font-size: 1.05rem;
-    padding: 6px 8px;
+    font-size: 1.2rem;
+    padding: 8px;
     border-radius: 30px;
     font-family: inherit;
     line-height: 1;
@@ -317,14 +326,15 @@
 
   .empty-state {
     text-align: center;
-    padding: 2.4rem 1.5rem;
-    color: #8b97a9;
+    padding: 3rem 1.5rem;
+    color: #94a3b8;
     background: #f8fafd;
     border-radius: 22px;
-    border: 1px dashed #d0ddeb;
-    font-size: 0.95rem;
+    border: 2px dashed #e2e8f0;
+    font-size: 1rem;
+    font-weight: 500;
   }
-  .empty-state .big-emoji { font-size: 2.4rem; display: block; margin-bottom: 10px; }
+  .empty-state .big-emoji { font-size: 3rem; display: block; margin-bottom: 12px; }
 
   @media (max-width: 760px) {
     .app-container { padding: 1.3rem 1rem; }
@@ -333,7 +343,7 @@
     .btn-add { width: 100%; }
     .record-desc { max-width: 120px; }
     .record-nums { gap: 8px; }
-    .num-block { min-width: 44px; }
+    .num-block { min-width: 46px; }
   }
 </style>
 </head>
@@ -343,32 +353,32 @@
   <div class="header">
     <div class="greeting" style="width: 100%;">
       <h1>🏫 擺攤記帳</h1>
-      <p>⚡ 自動算利潤與剩餘庫存 · 支援匯出備份</p>
+      <p>⚡ 自動算利潤與剩餘庫存 · 支援匯出 CSV 備份</p>
     </div>
     
     <!-- 設定區：期初資金 & 初始庫存 -->
     <div class="settings-area">
       <div class="setting-box">
-        <span>💰 我一開始帶了多少錢： $</span>
+        <span>💰 一開始帶多少錢：</span>
         <input type="number" id="initialFundsInput" value="0" min="0" step="1">
       </div>
       <div class="setting-box stock">
-        <span>📦 我總共帶了幾樣貨：</span>
+        <span>📦 總共帶幾樣貨：</span>
         <input type="number" id="initialStockInput" value="0" min="0" step="1">
       </div>
     </div>
 
     <div class="stats">
-      <div class="stat-item" style="text-align: left;">
+      <div class="stat-item">
         <div class="stat-label">目前手頭現金</div>
         <div class="stat-value cash-text" id="currentCash">$0</div>
       </div>
-      <div class="stat-item" style="text-align: left;">
+      <div class="stat-item">
         <div class="stat-label">剩餘貨品總數</div>
-        <div class="stat-value stock-text" id="remainingStock">0</div>
+        <div class="stat-value stock-text" id="remainingStock">0 件</div>
       </div>
       <div class="stat-item">
-        <div class="stat-label">總成本</div>
+        <div class="stat-label">總花費成本</div>
         <div class="stat-value cost-text" id="totalCost">$0</div>
       </div>
       <div class="stat-item">
@@ -378,10 +388,10 @@
     </div>
   </div>
 
-  <!-- 新增表單，加入「賣出數量」 -->
+  <!-- 新增表單：包含賣出數量 -->
   <div class="quick-add">
     <div class="form-row">
-      <div class="input-group" style="flex: 2 1 120px;">
+      <div class="input-group" style="flex: 2 1 140px;">
         <label>🛍️ 我賣了什麼</label>
         <input type="text" id="descInput" placeholder="例如：二手書" maxlength="30">
       </div>
@@ -397,7 +407,7 @@
         <label>💰 賣出總價</label>
         <input type="number" id="priceInput" placeholder="0" min="0" step="0.01">
       </div>
-      <div class="input-group" style="flex: 1.5 1 100px;">
+      <div class="input-group" style="flex: 1.5 1 120px;">
         <label>📝 備註</label>
         <input type="text" id="noteInput" placeholder="給誰/數量" maxlength="40">
       </div>
@@ -510,7 +520,7 @@
 
     totalCostEl.textContent = '$' + formatMoney(totalCost);
     totalProfitEl.textContent = '$' + formatMoney(totalProfit);
-    totalProfitEl.style.color = totalProfit < 0 ? '#c7254e' : '#2b6ed7';
+    totalProfitEl.style.color = totalProfit < 0 ? '#c7254e' : '#2563eb';
 
     if (records.length === 0) {
       recordsListEl.innerHTML =
