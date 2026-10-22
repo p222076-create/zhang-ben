@@ -3,717 +3,527 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>學校擺攤記帳</title>
+<title>學校擺攤記帳與庫存</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
-    background: #f5f7fb;
-    color: #1a1f2e;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
-    padding: 1rem;
+    background: #f5f7fb; color: #1a1f2e;
+    display: flex; justify-content: center; align-items: flex-start;
+    min-height: 100vh; padding: 1rem;
   }
-
   .app-container {
-    max-width: 1050px;
-    width: 100%;
-    background: #ffffff;
-    border-radius: 28px;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
-    padding: 1.8rem 1.6rem;
+    max-width: 1000px; width: 100%; background: #ffffff;
+    border-radius: 24px; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
+    padding: 1.5rem 1.2rem; margin-bottom: 2rem;
+  }
+  .header { margin-bottom: 1.5rem; border-bottom: 1px solid #edf2f9; padding-bottom: 1rem; }
+  .header h1 { font-size: 1.6rem; font-weight: 800; color: #0f172a; margin-bottom: 6px; }
+  .header p { font-size: 0.9rem; color: #64748b; }
+
+  /* 上方現金統計 */
+  .top-cash {
+    background: #fffbeb; border: 2px solid #fcd34d; border-radius: 16px;
+    padding: 1rem 1.2rem; display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.5rem; gap: 10px; flex-wrap: wrap;
+  }
+  .top-cash .label { font-weight: 700; color: #b45309; font-size: 1rem; }
+  .top-cash .value { font-size: 1.6rem; font-weight: 800; color: #d97706; }
+  .top-cash input {
+    width: 100px; padding: 0.5rem; border: 2px solid #fcd34d;
+    border-radius: 8px; font-size: 1rem; font-weight: 700; color: #b45309; text-align: center;
   }
 
-  .header {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.6rem;
-    gap: 1rem;
+  /* 分頁標籤 */
+  .tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; }
+  .tab-btn {
+    flex: 1; padding: 0.8rem; border: none; background: #f1f5f9; color: #64748b;
+    font-weight: 700; font-size: 0.95rem; border-radius: 12px; cursor: pointer; transition: 0.2s;
   }
-  .greeting h1 { font-size: 1.7rem; font-weight: 700; color: #0b1220; }
-  .greeting p { font-size: 0.88rem; color: #5e6a7d; margin-top: 4px; }
+  .tab-btn.active { background: #1e293b; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
-  /* 上方設定區塊：資金與庫存 */
-  .settings-area {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 1.2rem;
-    width: 100%;
-  }
-  .setting-box {
-    background: #fffbeb;
-    border: 2px dashed #fcd34d;
-    border-radius: 16px;
-    padding: 1rem 1.2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    font-weight: 700;
-    color: #b45309;
-    font-size: 1.05rem;
-    flex: 1 1 250px;
-  }
-  .setting-box.stock {
-    background: #f0fdf4;
-    border-color: #86efac;
-    color: #166534;
-  }
-  .setting-box input {
-    width: 90px;
-    padding: 0.6rem 0.8rem;
-    border-radius: 10px;
-    border: 2px solid #fcd34d;
-    font-family: inherit;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #b45309;
-    background: white;
-    outline: none;
-    text-align: center;
-  }
-  .setting-box.stock input {
-    border-color: #86efac;
-    color: #166534;
-  }
+  /* 隱藏區塊 */
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* 統計面板 */
-  .stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    padding: 1.2rem;
-    border-radius: 20px;
-    width: 100%;
-    justify-content: space-between;
-    margin-top: 0.5rem;
-  }
-  .stat-item { text-align: left; flex: 1 1 100px; }
-  .stat-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #64748b;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-  .stat-value { font-size: 1.5rem; font-weight: 800; line-height: 1.2; }
-  
-  .cash-text { color: #d97706; }
-  .stock-text { color: #166534; }
-  .cost-text { color: #b45309; font-size: 1.1rem; }
-  .profit-text { color: #2563eb; font-size: 1.1rem; }
-
-  /* 輸入表單 */
-  .quick-add {
-    background: #f8fafd;
-    border-radius: 22px;
-    padding: 1.3rem 1.3rem 1.1rem;
-    margin-bottom: 1.6rem;
-    border: 1px solid #e9eef3;
-  }
-  .form-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: flex-end;
-  }
+  /* 表單與卡片 */
+  .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.2rem; margin-bottom: 1.5rem; }
+  .card-title { font-weight: 800; color: #334155; margin-bottom: 1rem; font-size: 1.1rem; }
+  .form-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
   .input-group { flex: 1 1 100px; min-width: 0; }
-  .input-group label {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: #4a5568;
-    margin-bottom: 6px;
+  .input-group label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
+  .input-group input, .input-group select {
+    width: 100%; padding: 0.65rem 0.8rem; border-radius: 10px; border: 1.5px solid #cbd5e1;
+    font-family: inherit; font-size: 0.95rem; outline: none; background: white; color: #1e293b;
   }
-  .input-group input {
-    width: 100%;
-    padding: 0.75rem 0.9rem;
-    border-radius: 14px;
-    border: 1.5px solid #dfe7f0;
-    background: white;
-    font-family: inherit;
-    font-size: 1rem;
-    color: #1a1f2e;
-    outline: none;
-    transition: 0.15s;
-  }
-  .input-group input:focus {
-    border-color: #2b6ed7;
-    box-shadow: 0 0 0 4px rgba(43,110,215,0.1);
-  }
-  .input-group input::placeholder { color: #a0aec0; }
-
-  .btn-add {
-    background: #1a1f2e;
-    color: white;
-    border: none;
-    padding: 0.75rem 1.8rem;
-    border-radius: 30px;
-    font-weight: 700;
-    font-size: 1rem;
-    cursor: pointer;
-    height: 48px;
-    flex: 0 0 auto;
-    font-family: inherit;
-    transition: 0.2s;
-    box-shadow: 0 4px 12px rgba(26,31,46,0.2);
-  }
-  .btn-add:hover { background: #0b1220; }
-  .btn-add:active { transform: scale(0.98); }
-
-  /* 列表與工具列 */
-  .toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    gap: 10px;
-  }
-  .toolbar h2 { font-size: 1.1rem; font-weight: 800; color: #1a1f2e; }
-  .record-count {
-    background: #e9eef3;
-    padding: 0.2rem 0.8rem;
-    border-radius: 40px;
-    font-size: 0.8rem;
-    color: #2d3748;
-    font-weight: 700;
-    margin-left: 6px;
-  }
-  .toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-
-  .btn-tool {
-    background: none;
-    border: 1.5px solid #dfe7f0;
-    color: #4a5568;
-    font-size: 0.85rem;
-    cursor: pointer;
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-weight: 700;
-    font-family: inherit;
-    transition: 0.15s;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .btn-tool:hover { background: #f0f3fa; border-color: #cbd5e0; }
-  .btn-tool.danger:hover { background: #fce9ef; color: #c7254e; border-color: #f5c2d0; }
-  .btn-tool.export:hover { background: #e3f5e9; color: #1e7e34; border-color: #b7e0c4; }
-
-  /* 交易記錄列表 */
-  .records-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-height: 460px;
-    overflow-y: auto;
-    padding-right: 4px;
-  }
-
-  .record-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.2rem;
-    background: #ffffff;
-    border-radius: 18px;
-    border: 1px solid #edf2f9;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-    gap: 10px;
-    animation: fadeIn 0.2s ease;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-6px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .record-item:hover { border-color: #d0ddeb; background: #fbfdff; }
-
-  .record-left {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    min-width: 0;
-    flex: 1;
-  }
-  .record-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-    flex-shrink: 0;
-    font-weight: 700;
-    background: #eef4ff;
-    color: #2b6ed7;
-  }
-
-  .record-main { min-width: 0; }
-  .record-desc {
-    font-weight: 700;
-    font-size: 1rem;
-    color: #1a1f2e;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 180px;
-  }
-  .record-meta {
-    font-size: 0.75rem;
-    color: #7b8a9e;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 4px;
-    flex-wrap: wrap;
-  }
-  .record-meta .note { color: #8b6f3e; font-weight: 600; }
+  .input-group input:focus, .input-group select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
   
-  /* 賣出數量標籤 */
-  .qty-badge {
-    background: #e0f2fe;
-    color: #0369a1;
-    padding: 3px 8px;
-    border-radius: 6px;
-    font-weight: 800;
-    font-size: 0.75rem;
+  .btn {
+    padding: 0.65rem 1.5rem; border-radius: 10px; border: none; font-weight: 700; font-size: 0.95rem;
+    cursor: pointer; font-family: inherit; transition: 0.15s; height: 42px; flex: 0 0 auto;
   }
+  .btn-primary { background: #1e293b; color: white; }
+  .btn-primary:hover { background: #0f172a; }
+  .btn-add { background: #3b82f6; color: white; }
+  .btn-add:hover { background: #2563eb; }
+  .btn-outline { background: white; border: 1.5px solid #cbd5e1; color: #475569; }
+  .btn-outline:hover { background: #f8fafc; }
+  .btn-danger { background: #fee2e2; color: #b91c1c; }
+  .btn-danger:hover { background: #fecaca; }
 
-  .record-nums {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-shrink: 0;
-    text-align: right;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+  /* 列表 */
+  .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .list-header h3 { font-size: 1.1rem; font-weight: 800; color: #1e293b; }
+  .item-list { display: flex; flex-direction: column; gap: 8px; }
+  
+  .list-item {
+    display: flex; justify-content: space-between; align-items: center;
+    background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: 1rem; gap: 10px; flex-wrap: wrap;
   }
-  .num-block { min-width: 54px; }
-  .num-label { font-size: 0.65rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 2px;}
-  .num-val { font-weight: 800; font-size: 0.95rem; }
-  .num-cost { color: #b45309; }
-  .num-price { color: #1e7e34; }
-  .num-profit { color: #2563eb; }
-  .num-profit.negative { color: #c7254e; }
+  .item-info { flex: 1; min-width: 120px; }
+  .item-name { font-weight: 700; font-size: 1rem; color: #1e293b; }
+  .item-sub { font-size: 0.8rem; color: #64748b; margin-top: 3px; }
+  
+  .item-data { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .data-block { text-align: right; min-width: 60px; }
+  .data-label { font-size: 0.65rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; }
+  .data-value { font-weight: 800; font-size: 0.95rem; }
+  
+  .text-green { color: #16a34a; }
+  .text-blue { color: #2563eb; }
+  .text-orange { color: #d97706; }
+  .text-red { color: #dc2626; }
 
-  .delete-item {
-    background: none;
-    border: none;
-    color: #cbd5e1;
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 8px;
-    border-radius: 30px;
-    font-family: inherit;
-    line-height: 1;
-    transition: 0.15s;
-    flex-shrink: 0;
+  .empty-state { text-align: center; padding: 2rem; color: #94a3b8; background: #f8fafc; border: 2px dashed #e2e8f0; border-radius: 12px; font-weight: 500; }
+
+  .delete-btn {
+    background: none; border: none; color: #cbd5e1; cursor: pointer; font-size: 1.2rem;
+    padding: 5px; border-radius: 6px; transition: 0.15s;
   }
-  .delete-item:hover { color: #c7254e; background: #fce9ef; }
+  .delete-btn:hover { color: #dc2626; background: #fee2e2; }
 
-  .empty-state {
-    text-align: center;
-    padding: 3rem 1.5rem;
-    color: #94a3b8;
-    background: #f8fafd;
-    border-radius: 22px;
-    border: 2px dashed #e2e8f0;
-    font-size: 1rem;
-    font-weight: 500;
-  }
-  .empty-state .big-emoji { font-size: 3rem; display: block; margin-bottom: 12px; }
-
-  @media (max-width: 760px) {
-    .app-container { padding: 1.3rem 1rem; }
-    .header { flex-direction: column; align-items: flex-start; }
+  @media (max-width: 600px) {
+    .app-container { padding: 1rem; border-radius: 16px; }
     .form-row { flex-direction: column; align-items: stretch; }
-    .btn-add { width: 100%; }
-    .record-desc { max-width: 120px; }
-    .record-nums { gap: 8px; }
-    .num-block { min-width: 46px; }
+    .btn { width: 100%; }
+    .tabs { flex-direction: column; }
+    .item-data { width: 100%; justify-content: space-between; margin-top: 10px; }
+    .data-block { text-align: left; }
   }
 </style>
 </head>
 <body>
 <div class="app-container">
-
+  
   <div class="header">
-    <div class="greeting" style="width: 100%;">
-      <h1>🏫 擺攤記帳</h1>
-      <p>⚡ 自動算利潤與剩餘庫存 · 支援匯出 CSV 備份</p>
+    <h1>🏫 擺攤庫存與記帳</h1>
+    <p>📦 支援多樣商品進貨、自動扣庫存、精準算利潤</p>
+  </div>
+
+  <!-- 現金設定 -->
+  <div class="top-cash">
+    <div>
+      <div class="label">💰 目前手頭現金</div>
+      <div class="value" id="currentCash">$0</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span class="label" style="font-size:0.85rem;">一開始帶：</span>
+      <input type="number" id="initialFundsInput" value="0" min="0" step="1">
+    </div>
+  </div>
+
+  <!-- 分頁按鈕 -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-sell">🛒 賣出記錄</button>
+    <button class="tab-btn" id="tab-inventory">📦 商品庫存</button>
+    <button class="tab-btn" id="tab-history">📋 交易歷史</button>
+  </div>
+
+  <!-- 區塊一：賣出記錄 -->
+  <div class="panel active" id="panel-sell">
+    <div class="card">
+      <div class="card-title">🛍️ 新增一筆賣出</div>
+      <div class="form-row">
+        <div class="input-group" style="flex: 2;">
+          <label>選擇商品</label>
+          <select id="sellProductSelect">
+            <option value="">-- 請先到庫存區建立商品 --</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>數量</label>
+          <input type="number" id="sellQty" placeholder="1" min="1" value="1">
+        </div>
+        <div class="input-group">
+          <label>單品售價</label>
+          <input type="number" id="sellPrice" placeholder="0" min="0" step="0.01">
+        </div>
+        <div class="input-group" style="flex: 2;">
+          <label>備註</label>
+          <input type="text" id="sellNote" placeholder="給誰/其他說明">
+        </div>
+        <button class="btn btn-add" id="btnAddSale">＋ 記錄賣出</button>
+      </div>
     </div>
     
-    <!-- 設定區：期初資金 & 初始庫存 -->
-    <div class="settings-area">
-      <div class="setting-box">
-        <span>💰 一開始帶多少錢：</span>
-        <input type="number" id="initialFundsInput" value="0" min="0" step="1">
-      </div>
-      <div class="setting-box stock">
-        <span>📦 總共帶幾樣貨：</span>
-        <input type="number" id="initialStockInput" value="0" min="0" step="1">
-      </div>
+    <div class="list-header">
+      <h3>今日已賣出</h3>
     </div>
-
-    <div class="stats">
-      <div class="stat-item">
-        <div class="stat-label">目前手頭現金</div>
-        <div class="stat-value cash-text" id="currentCash">$0</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">剩餘貨品總數</div>
-        <div class="stat-value stock-text" id="remainingStock">0 件</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">總花費成本</div>
-        <div class="stat-value cost-text" id="totalCost">$0</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-label">總利潤</div>
-        <div class="stat-value profit-text" id="totalProfit">$0</div>
-      </div>
-    </div>
+    <div class="item-list" id="todaySalesList"></div>
   </div>
 
-  <!-- 新增表單：包含賣出數量 -->
-  <div class="quick-add">
-    <div class="form-row">
-      <div class="input-group" style="flex: 2 1 140px;">
-        <label>🛍️ 我賣了什麼</label>
-        <input type="text" id="descInput" placeholder="例如：二手書" maxlength="30">
+  <!-- 區塊二：商品庫存 -->
+  <div class="panel" id="panel-inventory">
+    <div class="card">
+      <div class="card-title">📦 進貨 / 建立新商品</div>
+      <div class="form-row">
+        <div class="input-group" style="flex: 2;">
+          <label>商品名稱</label>
+          <input type="text" id="newProductName" placeholder="例如：二手書">
+        </div>
+        <div class="input-group">
+          <label>進貨數量</label>
+          <input type="number" id="newProductQty" placeholder="10" min="1">
+        </div>
+        <div class="input-group">
+          <label>總花費成本</label>
+          <input type="number" id="newProductCost" placeholder="0" min="0" step="0.01">
+        </div>
+        <button class="btn btn-add" id="btnAddProduct">＋ 建立商品</button>
       </div>
-      <div class="input-group" style="flex: 0.8 1 80px;">
-        <label>🔢 賣出數量</label>
-        <input type="number" id="qtyInput" placeholder="1" min="1" step="1" value="1">
-      </div>
-      <div class="input-group">
-        <label>💸 花費成本</label>
-        <input type="number" id="costInput" placeholder="0" min="0" step="0.01" value="0">
-      </div>
-      <div class="input-group">
-        <label>💰 賣出總價</label>
-        <input type="number" id="priceInput" placeholder="0" min="0" step="0.01">
-      </div>
-      <div class="input-group" style="flex: 1.5 1 120px;">
-        <label>📝 備註</label>
-        <input type="text" id="noteInput" placeholder="給誰/數量" maxlength="40">
-      </div>
-      <button class="btn-add" id="addBtn">＋ 記錄</button>
     </div>
+
+    <div class="list-header">
+      <h3>目前庫存</h3>
+    </div>
+    <div class="item-list" id="inventoryList"></div>
   </div>
 
-  <div class="toolbar">
-    <h2>📋 交易記錄 <span class="record-count" id="recordCount">0</span></h2>
-    <div class="toolbar-actions">
-      <button class="btn-tool export" id="exportBtn">⬇️ 匯出 CSV</button>
-      <button class="btn-tool danger" id="clearAllBtn">🗑️ 清除全部</button>
+  <!-- 區塊三：交易歷史 -->
+  <div class="panel" id="panel-history">
+    <div class="list-header">
+      <h3>所有交易記錄</h3>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-outline" id="btnExport">⬇️ 匯出 CSV</button>
+        <button class="btn btn-danger" id="btnClearAll">🗑️ 清除全部</button>
+      </div>
     </div>
+    <div class="item-list" id="historyList"></div>
   </div>
-
-  <div class="records-list" id="recordsList"></div>
 
 </div>
 
 <script>
 (function() {
-  var STORAGE_KEY = 'school_stall_account_records';
-  var FUNDS_KEY = 'school_stall_initial_funds';
-  var STOCK_KEY = 'school_stall_initial_stock';
+  var FUNDS_KEY = 'stall_v2_funds';
+  var PRODUCTS_KEY = 'stall_v2_products';
+  var SALES_KEY = 'stall_v2_sales';
 
-  var records = [];
   var initialFunds = 0;
-  var initialStock = 0;
+  var products = []; // { id, name, initialQty, totalCost, unitCost, remainingQty }
+  var sales = [];    // { id, productId, productName, qty, price, cost, note, date }
 
-  function generateId() {
-    return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+  // 載入資料
+  try {
+    var f = localStorage.getItem(FUNDS_KEY);
+    if (f !== null) initialFunds = Number(f) || 0;
+
+    var p = localStorage.getItem(PRODUCTS_KEY);
+    if (p) products = JSON.parse(p);
+
+    var s = localStorage.getItem(SALES_KEY);
+    if (s) sales = JSON.parse(s);
+  } catch (e) {}
+
+  // 儲存資料
+  function save() {
+    localStorage.setItem(FUNDS_KEY, initialFunds);
+    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+    localStorage.setItem(SALES_KEY, JSON.stringify(sales));
   }
 
-  function todayStr() {
-    return new Date().toISOString().split('T')[0];
+  function generateId() { return Date.now() + '-' + Math.random().toString(36).substr(2, 9); }
+  function todayStr() { return new Date().toISOString().split('T')[0]; }
+  function formatMoney(v) { return (Number(v)||0) % 1 === 0 ? v : Number(v).toFixed(2); }
+
+  // DOM 元素
+  var elInitialFunds = document.getElementById('initialFundsInput');
+  var elCurrentCash = document.getElementById('currentCash');
+  var elSellProductSelect = document.getElementById('sellProductSelect');
+  var elTodaySalesList = document.getElementById('todaySalesList');
+  var elInventoryList = document.getElementById('inventoryList');
+  var elHistoryList = document.getElementById('historyList');
+
+  // 分頁切換
+  document.getElementById('tab-sell').onclick = function() { switchTab('sell'); };
+  document.getElementById('tab-inventory').onclick = function() { switchTab('inventory'); };
+  document.getElementById('tab-history').onclick = function() { switchTab('history'); };
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+    
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
   }
 
-  function loadData() {
-    try {
-      var storedFunds = localStorage.getItem(FUNDS_KEY);
-      if (storedFunds !== null) initialFunds = Number(storedFunds) || 0;
-      
-      var storedStock = localStorage.getItem(STOCK_KEY);
-      if (storedStock !== null) initialStock = Number(storedStock) || 0;
-
-      var stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        var parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          records = parsed.map(function(r) {
-            r.id = r.id || generateId();
-            r.qty = Number(r.qty) || 1;
-            r.cost = Number(r.cost) || 0;
-            r.price = Number(r.price) || 0;
-            r.note = r.note || '';
-            return r;
-          });
-          return;
-        }
-      }
-    } catch (e) {}
-    records = [];
-  }
-
-  function saveData() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-      localStorage.setItem(FUNDS_KEY, initialFunds);
-      localStorage.setItem(STOCK_KEY, initialStock);
-    } catch (e) {}
-  }
-
-  var initialFundsInput = document.getElementById('initialFundsInput');
-  var initialStockInput = document.getElementById('initialStockInput');
-  var currentCashEl = document.getElementById('currentCash');
-  var remainingStockEl = document.getElementById('remainingStock');
-  var totalCostEl = document.getElementById('totalCost');
-  var totalProfitEl = document.getElementById('totalProfit');
-  var recordsListEl = document.getElementById('recordsList');
-  var recordCountEl = document.getElementById('recordCount');
-
-  function formatMoney(v) {
-    var num = Number(v) || 0;
-    return num % 1 === 0 ? num.toString() : num.toFixed(2);
-  }
-
+  // 渲染畫面
   function render() {
-    var totalCost = 0, totalPrice = 0, totalProfit = 0, totalSoldQty = 0;
-
-    records.forEach(function(rec) {
-      var cost = Number(rec.cost) || 0;
-      var price = Number(rec.price) || 0;
-      var qty = Number(rec.qty) || 1;
-      var profit = price - cost;
-      
-      totalCost += cost;
-      totalPrice += price;
-      totalProfit += profit;
-      totalSoldQty += qty;
-    });
-
+    // 1. 計算總利潤 & 現金
+    var totalProfit = 0;
+    sales.forEach(function(s) { totalProfit += (s.price - s.cost); });
     var currentCash = initialFunds + totalProfit;
-    var remainingStock = initialStock - totalSoldQty;
 
-    currentCashEl.textContent = '$' + formatMoney(currentCash);
-    currentCashEl.style.color = currentCash < 0 ? '#c7254e' : '#d97706';
+    elCurrentCash.textContent = '$' + formatMoney(currentCash);
+    elCurrentCash.style.color = currentCash < 0 ? '#dc2626' : '#d97706';
+    elInitialFunds.value = initialFunds;
 
-    remainingStockEl.textContent = remainingStock + ' 件';
-    remainingStockEl.style.color = remainingStock < 0 ? '#c7254e' : '#166534';
+    // 2. 更新下拉選單 (排除庫存為 0 的)
+    var selectHTML = '<option value="">-- 選擇商品 --</option>';
+    products.forEach(function(p) {
+      if (p.remainingQty > 0) {
+        selectHTML += '<option value="' + p.id + '">' + p.name + ' (剩 ' + p.remainingQty + ' 個)</option>';
+      }
+    });
+    elSellProductSelect.innerHTML = selectHTML;
 
-    totalCostEl.textContent = '$' + formatMoney(totalCost);
-    totalProfitEl.textContent = '$' + formatMoney(totalProfit);
-    totalProfitEl.style.color = totalProfit < 0 ? '#c7254e' : '#2563eb';
-
-    if (records.length === 0) {
-      recordsListEl.innerHTML =
-        '<div class="empty-state">' +
-          '<span class="big-emoji">🧾</span>' +
-          '還沒有任何交易，記下第一筆吧！' +
-        '</div>';
-      recordCountEl.textContent = '0';
-      return;
+    // 3. 渲染今日賣出
+    var today = todayStr();
+    var todaySalesHTML = '';
+    var todayCount = 0;
+    sales.slice().reverse().forEach(function(s) {
+      if (s.date === today) {
+        todayCount++;
+        todaySalesHTML += createSaleHTML(s);
+      }
+    });
+    if (todayCount === 0) {
+      elTodaySalesList.innerHTML = '<div class="empty-state">今天還沒有賣出東西喔！</div>';
+    } else {
+      elTodaySalesList.innerHTML = todaySalesHTML;
     }
 
-    var html = '';
-    records.forEach(function(rec) {
-      var cost = Number(rec.cost) || 0;
-      var price = Number(rec.price) || 0;
-      var qty = Number(rec.qty) || 1;
-      var profit = price - cost;
-      var profitClass = profit < 0 ? 'num-profit negative' : 'num-profit';
-      var desc = rec.desc || '未命名';
-      var note = rec.note ? '<span class="note">📝 ' + rec.note + '</span>' : '';
-      var dateStr = rec.date || '';
-
-      html +=
-        '<div class="record-item" data-id="' + rec.id + '">' +
-          '<div class="record-left">' +
-            '<div class="record-icon">$</div>' +
-            '<div class="record-main">' +
-              '<div class="record-desc" title="' + desc + '">' + desc + '</div>' +
-              '<div class="record-meta">' +
-                '<span class="qty-badge">賣出 ' + qty + ' 個</span>' +
-                '<span>📅 ' + dateStr + '</span>' +
-                note +
+    // 4. 渲染庫存
+    var invHTML = '';
+    if (products.length === 0) {
+      invHTML = '<div class="empty-state">還沒有建立任何商品，請先在上面進貨。</div>';
+    } else {
+      products.forEach(function(p) {
+        invHTML += 
+          '<div class="list-item">' +
+            '<div class="item-info">' +
+              '<div class="item-name">' + p.name + '</div>' +
+              '<div class="item-sub">總進貨 ' + p.initialQty + ' 個 · 平均成本 $' + formatMoney(p.unitCost) + ' / 個</div>' +
+            '</div>' +
+            '<div class="item-data">' +
+              '<div class="data-block">' +
+                '<div class="data-label">剩餘庫存</div>' +
+                '<div class="data-value ' + (p.remainingQty > 0 ? 'text-green' : 'text-red') + '">' + p.remainingQty + ' 個</div>' +
               '</div>' +
+              '<div class="data-block">' +
+                '<div class="data-label">總花費</div>' +
+                '<div class="data-value text-orange">$' + formatMoney(p.totalCost) + '</div>' +
+              '</div>' +
+              '<button class="delete-btn" onclick="deleteProduct(\'' + p.id + '\')">✕</button>' +
             '</div>' +
-          '</div>' +
-          '<div class="record-nums">' +
-            '<div class="num-block">' +
-              '<div class="num-label">成本</div>' +
-              '<div class="num-val num-cost">$' + formatMoney(cost) + '</div>' +
-            '</div>' +
-            '<div class="num-block">' +
-              '<div class="num-label">售價</div>' +
-              '<div class="num-val num-price">$' + formatMoney(price) + '</div>' +
-            '</div>' +
-            '<div class="num-block">' +
-              '<div class="num-label">利潤</div>' +
-              '<div class="num-val ' + profitClass + '">$' + formatMoney(profit) + '</div>' +
-            '</div>' +
-            '<button class="delete-item" data-id="' + rec.id + '" title="刪除">✕</button>' +
-          '</div>' +
-        '</div>';
-    });
-
-    recordsListEl.innerHTML = html;
-    recordCountEl.textContent = records.length;
-
-    var deleteBtns = document.querySelectorAll('.delete-item');
-    for (var i = 0; i < deleteBtns.length; i++) {
-      deleteBtns[i].addEventListener('click', function(e) {
-        e.stopPropagation();
-        deleteRecordById(this.getAttribute('data-id'));
+          '</div>';
       });
     }
-  }
+    elInventoryList.innerHTML = invHTML;
 
-  function deleteRecordById(id) {
-    records = records.filter(function(r) { return r.id !== id; });
-    saveData();
-    render();
-  }
-
-  function addRecord(desc, qty, cost, price, note) {
-    var trimmedDesc = desc.trim();
-    if (!trimmedDesc) { alert('請輸入賣了什麼'); return false; }
-
-    var numQty = parseInt(qty);
-    if (isNaN(numQty) || numQty <= 0) { alert('賣出數量必須大於 0'); return false; }
-
-    var numCost = parseFloat(cost);
-    if (isNaN(numCost) || numCost < 0) { alert('花費成本請填 0 或正數'); return false; }
-
-    var numPrice = parseFloat(price);
-    if (isNaN(numPrice) || numPrice < 0) { alert('賣出總價請填 0 或正數'); return false; }
-    if (numPrice === 0 && numCost === 0) { alert('成本與售價不能同時為 0'); return false; }
-
-    records.unshift({
-      id: generateId(),
-      desc: trimmedDesc,
-      qty: numQty,
-      cost: numCost,
-      price: numPrice,
-      note: note.trim(),
-      date: todayStr()
-    });
-    saveData();
-    render();
-    return true;
-  }
-
-  function clearAllRecords() {
-    if (records.length === 0) return;
-    if (confirm('確定要刪除所有交易記錄嗎？此動作無法復原。')) {
-      records = [];
-      saveData();
-      render();
+    // 5. 渲染歷史紀錄
+    var histHTML = '';
+    if (sales.length === 0) {
+      histHTML = '<div class="empty-state">還沒有任何交易紀錄。</div>';
+    } else {
+      sales.slice().reverse().forEach(function(s) {
+        histHTML += createSaleHTML(s, true);
+      });
     }
+    elHistoryList.innerHTML = histHTML;
+
+    // 綁定刪除按鈕
+    document.querySelectorAll('.delete-sale').forEach(function(btn) {
+      btn.onclick = function() { deleteSale(this.getAttribute('data-id')); };
+    });
   }
 
-  function exportCSV() {
-    if (records.length === 0) {
-      alert('目前沒有記錄可以匯出');
+  function createSaleHTML(s, showDate) {
+    var profit = s.price - s.cost;
+    var profitClass = profit < 0 ? 'text-red' : 'text-blue';
+    var dateStr = showDate ? '<span>📅 ' + s.date + '</span>' : '';
+    var noteStr = s.note ? '<span>📝 ' + s.note + '</span>' : '';
+    
+    return '<div class="list-item">' +
+      '<div class="item-info">' +
+        '<div class="item-name">' + s.productName + ' <span style="font-size:0.8rem; color:#3b82f6; background:#eff6ff; padding:2px 6px; border-radius:4px;">賣出 ' + s.qty + ' 個</span></div>' +
+        '<div class="item-sub">' + dateStr + ' ' + noteStr + '</div>' +
+      '</div>' +
+      '<div class="item-data">' +
+        '<div class="data-block">' +
+          '<div class="data-label">成本</div>' +
+          '<div class="data-value text-orange">$' + formatMoney(s.cost) + '</div>' +
+        '</div>' +
+        '<div class="data-block">' +
+          '<div class="data-label">售價</div>' +
+          '<div class="data-value text-green">$' + formatMoney(s.price) + '</div>' +
+        '</div>' +
+        '<div class="data-block">' +
+          '<div class="data-label">利潤</div>' +
+          '<div class="data-value ' + profitClass + '">$' + formatMoney(profit) + '</div>' +
+        '</div>' +
+        '<button class="delete-btn delete-sale" data-id="' + s.id + '">✕</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  // 動作：修改期初資金
+  elInitialFunds.oninput = function() {
+    initialFunds = Number(this.value) || 0;
+    save(); render();
+  };
+
+  // 動作：新增商品進貨
+  document.getElementById('btnAddProduct').onclick = function() {
+    var name = document.getElementById('newProductName').value.trim();
+    var qty = parseInt(document.getElementById('newProductQty').value);
+    var cost = parseFloat(document.getElementById('newProductCost').value);
+
+    if (!name) { alert('請輸入商品名稱'); return; }
+    if (isNaN(qty) || qty <= 0) { alert('進貨數量要大於 0'); return; }
+    if (isNaN(cost) || cost < 0) { alert('總花費成本請填 0 或正數'); return; }
+
+    var unitCost = cost / qty;
+
+    products.push({
+      id: generateId(),
+      name: name,
+      initialQty: qty,
+      totalCost: cost,
+      unitCost: unitCost,
+      remainingQty: qty
+    });
+
+    save(); render();
+    
+    document.getElementById('newProductName').value = '';
+    document.getElementById('newProductQty').value = '';
+    document.getElementById('newProductCost').value = '';
+  };
+
+  // 動作：刪除商品 (會連同已賣出的紀錄一起保留，但此商品不再顯示於庫存)
+  window.deleteProduct = function(id) {
+    if (confirm('確定要刪除這個商品嗎？(已經賣出的紀錄不會消失)')) {
+      products = products.filter(function(p) { return p.id !== id; });
+      save(); render();
+    }
+  };
+
+  // 動作：新增賣出
+  document.getElementById('btnAddSale').onclick = function() {
+    var prodId = elSellProductSelect.value;
+    var qty = parseInt(document.getElementById('sellQty').value);
+    var price = parseFloat(document.getElementById('sellPrice').value);
+    var note = document.getElementById('sellNote').value.trim();
+
+    if (!prodId) { alert('請選擇要賣出的商品'); return; }
+    if (isNaN(qty) || qty <= 0) { alert('賣出數量必須大於 0'); return; }
+    if (isNaN(price) || price < 0) { alert('請輸入正確的單品售價'); return; }
+
+    var product = products.find(function(p) { return p.id === prodId; });
+    if (!product) return;
+
+    if (product.remainingQty < qty) {
+      alert('庫存不足！目前「' + product.name + '」只剩 ' + product.remainingQty + ' 個。');
       return;
     }
 
-    var headers = ['日期', '品項', '賣出數量', '成本', '售價', '利潤', '備註'];
-    var rows = [headers.join(',')];
+    // 扣除庫存
+    product.remainingQty -= qty;
+    // 計算這筆的總成本
+    var thisCost = product.unitCost * qty;
+    var thisPrice = price * qty; // 單品售價 * 數量
 
-    records.forEach(function(rec) {
-      var cost = Number(rec.cost) || 0;
-      var price = Number(rec.price) || 0;
-      var qty = Number(rec.qty) || 1;
-      var profit = price - cost;
+    sales.push({
+      id: generateId(),
+      productId: prodId,
+      productName: product.name,
+      qty: qty,
+      cost: thisCost,
+      price: thisPrice,
+      note: note,
+      date: todayStr()
+    });
+
+    save(); render();
+
+    document.getElementById('sellQty').value = '1';
+    document.getElementById('sellPrice').value = '';
+    document.getElementById('sellNote').value = '';
+  };
+
+  // 動作：刪除賣出紀錄 (會把庫存加回去)
+  window.deleteSale = function(id) {
+    if (confirm('確定要刪除這筆交易嗎？庫存會加回去喔。')) {
+      var saleToDelete = sales.find(function(s) { return s.id === id; });
+      if (saleToDelete) {
+        var product = products.find(function(p) { return p.id === saleToDelete.productId; });
+        if (product) {
+          product.remainingQty += saleToDelete.qty; // 庫存加回
+        }
+      }
+      sales = sales.filter(function(s) { return s.id !== id; });
+      save(); render();
+    }
+  };
+
+  // 動作：清除全部
+  document.getElementById('btnClearAll').onclick = function() {
+    if (confirm('警告：這會刪除所有商品庫存與交易紀錄，無法復原！確定嗎？')) {
+      products = [];
+      sales = [];
+      save(); render();
+    }
+  };
+
+  // 動作：匯出 CSV
+  document.getElementById('btnExport').onclick = function() {
+    if (sales.length === 0) { alert('沒有交易紀錄可以匯出'); return; }
+    
+    var headers = ['日期', '商品名稱', '賣出數量', '單品成本', '單品售價', '總成本', '總售價', '總利潤', '備註'];
+    var rows = [headers.join(',')];
+    
+    sales.forEach(function(s) {
+      var unitCost = s.cost / s.qty;
+      var unitPrice = s.price / s.qty;
+      var profit = s.price - s.cost;
       var row = [
-        rec.date || '',
-        '"' + (rec.desc || '').replace(/"/g, '""') + '"',
-        qty,
-        cost,
-        price,
-        profit,
-        '"' + (rec.note || '').replace(/"/g, '""') + '"'
+        s.date, '"' + s.productName + '"', s.qty,
+        formatMoney(unitCost), formatMoney(unitPrice),
+        formatMoney(s.cost), formatMoney(s.price), formatMoney(profit),
+        '"' + (s.note || '') + '"'
       ];
       rows.push(row.join(','));
     });
-
+    
     var csvContent = '\uFEFF' + rows.join('\r\n');
     var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = '擺攤記帳_' + todayStr() + '.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    a.download = '擺攤報表_' + todayStr() + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }
+  };
 
-  loadData();
-  initialFundsInput.value = initialFunds;
-  initialStockInput.value = initialStock;
+  // 自動填入售價 (當選擇商品時)
+  elSellProductSelect.onchange = function() {
+    // 雖然沒有預設售價，但可以留空讓使用者自己填
+  };
+
   render();
-
-  initialFundsInput.addEventListener('input', function() {
-    initialFunds = Number(this.value) || 0;
-    saveData();
-    render();
-  });
-  
-  initialStockInput.addEventListener('input', function() {
-    initialStock = Number(this.value) || 0;
-    saveData();
-    render();
-  });
-
-  var descInput = document.getElementById('descInput');
-  var qtyInput = document.getElementById('qtyInput');
-  var costInput = document.getElementById('costInput');
-  var priceInput = document.getElementById('priceInput');
-  var noteInput = document.getElementById('noteInput');
-  var addBtn = document.getElementById('addBtn');
-  var exportBtn = document.getElementById('exportBtn');
-  var clearAllBtn = document.getElementById('clearAllBtn');
-
-  addBtn.addEventListener('click', function() {
-    var ok = addRecord(descInput.value, qtyInput.value, costInput.value, priceInput.value, noteInput.value);
-    if (ok) {
-      descInput.value = '';
-      qtyInput.value = '1';
-      costInput.value = '0';
-      priceInput.value = '';
-      noteInput.value = '';
-      descInput.focus();
-    }
-  });
-
-  descInput.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); }
-  });
-  priceInput.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); }
-  });
-
-  exportBtn.addEventListener('click', exportCSV);
-  clearAllBtn.addEventListener('click', clearAllRecords);
 })();
 </script>
 </body>
